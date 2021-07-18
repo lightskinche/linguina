@@ -1,0 +1,2 @@
+C:\Users\Light\source\repos\linguina\Debug\linguina.exe
+C:\Users\Light\source\repos\linguina\Debug\linguina.pdb
