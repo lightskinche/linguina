@@ -1,40 +1,27 @@
 --this function runs on startup
 function start(state)
-   log("this was called on startup")
-   locmap = create_locationmap(3,2,{"a","b"},{"c","d"},{"e","f"},{"g","h"},{"i","j"},{"k","l"})
-   --coming along well
-   locmap[2].examine = "test"
-   log(locmap[2].examine)
-   --dont know why this was so hard to get right
-   test = create_scene("test","walk","leave","examine", locmap[2])
-   print(test.locations[2])
-   texture = state.load_texture("resources/test.png")
-   texture2 = state.load_texture("resources/test2.png")
+   roblox_t = state.load_texture("resources/test.png")
+   test = create_scene("test","I walked into the testing area, it was nice.","I left.","examine", nil)
+   test.callback_enter = function(scene)set_background(roblox_t,nil)end
+   load_scene(test)
+   nullzone = create_scene("null","I walked into the null zone, nothingness took me over","I left the nullzone","examine",nil)
+   nullzone.callback_enter = function(scene)set_background(nil,nil)end
+   load_scene(nullzone)
+   set_currentscene(test)
+   set_background(roblox_t,nil)
    return true
 end
 --this function runs during the text input loop
 function textmain(state, input_buf) --note that input_buf is not converted into tokens like in main
     if state.mode == "confirmation" then
-       if string.sub(input_buf,1,1) == 'w' then
-	     return true
+	   if input_buf == "go" then --if the only thing they put is "go"
+			return false, "Give a location I should go to. (or do help go)"
 	   else
- 		 return false, "There was not a w present"
+       return true
 	   end
 	end
 end
 --this function gets run after text input is recieved
 function main(state) --gets an arbitrary number of arguments
-testtest = find_scene_u("test")
-if a then return false end
-if testtest then
-state.set_background(texture)
-state.display(testtest.on_enter)
-destroy_scene(testtest)
-else
-a = true
-state.set_background(texture2, true)
-state.destroy_texture(texture)
-state.display("The a par tip redact theory is one of the best developments mankind has acheived; it is truely the pinical of creation and represents us very well as a specesis and we should ap arsfsfsffksjflk.")
-end
 return true
 end

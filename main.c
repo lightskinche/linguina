@@ -9,16 +9,17 @@ int main_ref = 0, textmain_ref = 0, start_ref = 0;
 int text_background = 0;
 
 SDL_Window* window = NULL; SDL_Renderer* renderer = NULL; 
-SDL_Event even; TTF_Font* strd_font = NULL;
+SDL_Event even; TTF_Font* strd_font = NULL; Uint8* keyboard = NULL;
 
 s_renderered_text g_text, g_err_text;
-s_scene* unloaded_scenes = NULL, *scenes = NULL;
+s_scene* unloaded_scenes = NULL, *scenes = NULL, *cur_scene = NULL;
 FILE* logfile; SDL_Texture* background = NULL;
 
 int main(void) {
-	logfile = fopen("log.txt", "w"); //should close automatically on program termination since the os will clean it up
+	logfile = fopen("log.txt", "w"); //should close automatically on program termination; there is no point throwing fclose(logfile) everywhere
 	SDL_Init(SDL_INIT_EVERYTHING);
 	TTF_Init();
+	keyboard = SDL_GetKeyboardState(NULL); //do this early because why not
 	//open engine.config
 	{
 		FILE* fp = fopen("engine.config", "r");

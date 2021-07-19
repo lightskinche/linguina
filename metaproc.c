@@ -13,6 +13,12 @@ int METAPROC_Index_Scene(lua_State* L) { //basically just allows you to get stuf
 			lua_pushstring(L, tmp_scene->on_exit);
 		else if (!strcmp(member, "examine"))
 			lua_pushstring(L, tmp_scene->examine);
+		else if (!strcmp(member, "callback_enter"))
+			lua_pushboolean(L, tmp_scene->callback_enter & 1);
+		else if (!strcmp(member, "callback_exit"))
+			lua_pushboolean(L, tmp_scene->callback_exit & 1);
+		else if (!strcmp(member, "callback_examine"))
+			lua_pushboolean(L, tmp_scene->callback_examine & 1);
 		else if (!strcmp(member, "locations")) {
 			lua_pushlightuserdata(L, tmp_scene->locations);
 			if (tmp_scene->locations->map) //now we are able to tell if we were given a locationmap or a location since that is pretty important
@@ -52,9 +58,17 @@ int METAPROC_NewIndex_Scene(lua_State* L) { //basically just allows you to set s
 			char* value = luaL_checkstring(L, 3);
 			tmp_scene->examine = value;
 		}
-		else if (!strcmp(member, "a")) {
-			s_location* locations = lua_touserdata(L, 3);
-			tmp_scene->locations = locations;
+		else if (!strcmp(member, "callback_enter")) {
+			luaL_checktype(L, 3, LUA_TFUNCTION);
+			tmp_scene->callback_enter = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+		else if (!strcmp(member, "callback_exit")) {
+			luaL_checktype(L, 3, LUA_TFUNCTION);
+			tmp_scene->callback_exit = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+		else if (!strcmp(member, "callback_examine")) {
+			luaL_checktype(L, 3, LUA_TFUNCTION);
+			tmp_scene->callback_examine = luaL_ref(L, LUA_REGISTRYINDEX);
 		}
 		else {
 			flogf("LUA EXCEPTION: Attempted to set nonexistant member %s in type 'scene'\n", member);

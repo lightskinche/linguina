@@ -19,12 +19,14 @@
 //some macros
 #define MAX_BUFFER_SIZE 512 //512 is an all-around good amount for most char arrays
 #define MAX_INPUT_SIZE 64
+#define MAX_TOKENS 4
 //important globals
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern SDL_Event even;
 extern TTF_Font* strd_font;
 extern FILE* logfile;
+extern Uint8* keyboard; //just in case we need quick keyboard input
 extern char entry_symbol[MAX_BUFFER_SIZE], textmain_symbol[MAX_BUFFER_SIZE], start_symbol[MAX_BUFFER_SIZE];
 extern char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
 extern char input_buf[MAX_INPUT_SIZE];
@@ -60,6 +62,7 @@ typedef struct s_thing s_thing;
 
 struct s_scene {
 	char* name, *on_enter, *on_exit, *examine;
+	int callback_enter, callback_exit, callback_examine;
 	s_location* locations;
 	UT_hash_handle hh;
 };
@@ -72,10 +75,12 @@ struct s_location {
 struct s_thing {
 	char* name, *examine;
 };
-extern s_scene* unloaded_scenes, *scenes;
+extern s_scene* unloaded_scenes, *scenes, *cur_scene;
 //important global functions
 extern inline void AUX_Load_Libraries(void);
 extern void AUX_Handle_GameLoop(void);
+extern void AUX_RenderTextProccesing(void);
+extern void AUX_Display(char* buffer); //display something at the bottom of the screen
 extern void flogf(char* format, ...); //special function that writes to stdout and to log.txt
 //lua functions
 extern int LUAPROC_Load_Texture(lua_State* L);
@@ -94,6 +99,9 @@ extern int LUAPROC_Find_Scene_Unloaded(lua_State* L);
 extern int LUAPROC_Create_LocationMap(lua_State* L);
 extern int LUAPROC_Create_Location(lua_State* L);
 extern int LUAPROC_Destroy_Location(lua_State* L);
+
+extern int LUAPROC_Wait(lua_State* L);
+extern int LUAPROC_Set_CurrentScene(lua_State* L);
 //metamethods
 extern int METAPROC_Index_Scene(lua_State* L);
 extern int METAPROC_NewIndex_Scene(lua_State* L);

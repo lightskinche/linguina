@@ -57,6 +57,21 @@ inline void AUX_Load_Libraries(void) {
 
 	lua_pushcfunction(L, LUAPROC_Destroy_Location);
 	lua_setglobal(L, "destroy_location");
+
+	lua_pushcfunction(L, LUAPROC_Wait);
+	lua_setglobal(L, "wait");
+	
+	lua_pushcfunction(L, LUAPROC_Display);
+	lua_setglobal(L, "dipslay");
+
+	lua_pushcfunction(L, LUAPROC_Destroy_Texture);
+	lua_setglobal(L, "destroy_texture");
+
+	lua_pushcfunction(L, LUAPROC_Set_Background);
+	lua_setglobal(L, "set_background");
+
+	lua_pushcfunction(L, LUAPROC_Set_CurrentScene);
+	lua_setglobal(L, "set_currentscene");
 }
 
 void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' function and moves the text-based game forward
@@ -119,9 +134,13 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 			receving_input = !lua_toboolean(L, -2);
 			if (receving_input) {
 				SDL_Surface* tmp_surf = TTF_RenderText_Blended_Wrapped(strd_font, lua_tostring(L, -1), (SDL_Color) { 255, 0, 0 }, resolution_x);
-				g_err_text.text = SDL_CreateTextureFromSurface(renderer, tmp_surf);
-				g_err_text.w = tmp_surf->w, g_err_text.h = tmp_surf->h;
-				SDL_FreeSurface(tmp_surf);
+				if (tmp_surf) {
+					g_err_text.text = SDL_CreateTextureFromSurface(renderer, tmp_surf);
+					g_err_text.w = tmp_surf->w, g_err_text.h = tmp_surf->h;
+					SDL_FreeSurface(tmp_surf);
+				}
+				else
+					flogf("LUA EXCEPTION: No reason given for function '%s' failure\n", textmain_symbol);
 			}
 		}
 		SDL_RenderClear(renderer);
@@ -150,56 +169,65 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 		lua_settop(L, 0); //get everything off the stack
 	}
 	else {
-		//make sure we empty the last g_text
-		if (g_text.text)
-			SDL_DestroyTexture(g_text.text);
-		g_text.w = 0, g_text.h = 0;
 		//prase input and seperate into tokens
 		//run the 'main' function before we do any processing
 		lua_rawgeti(L, LUA_REGISTRYINDEX, main_ref);
-		//now set up the 'state' table, this table will contain the current data about the program and functions that can be used in main
-		lua_newtable(L);
-		lua_pushcfunction(L, LUAPROC_Display);
-		lua_setfield(L, -2, "display");
-		lua_pushcfunction(L, LUAPROC_Set_Background);
-		lua_setfield(L, -2, "set_background");
-		lua_pushcfunction(L, LUAPROC_Destroy_Texture);
-		lua_setfield(L, -2, "destroy_texture"); //main is allowed to destroy materials once they are no longer needed, but it cannot load them
-		
 		char input_buf_c[MAX_INPUT_SIZE]; memcpy(input_buf_c, input_buf, strlen(input_buf) + 1);
 		//do this so we don't end up modifyig the actual input_buf since we still need it
-		char* token = strtok(input_buf_c, " "); int num_arg = 1;
-		lua_pushstring(L, token);
-		while (token != NULL) {
-			token = strtok(NULL, " ");
-			lua_pushstring(L, token);
-			num_arg++;
+		char** tokens[MAX_TOKENS] = {NULL,NULL,NULL,NULL};
+		tokens[0] = strtok(input_buf_c, " "); 
+		lua_pushstring(L, tokens[0]);
+		for (int i = 1; i < MAX_TOKENS; ++i) {
+			tokens[i] = strtok(NULL, " ");
+			lua_pushstring(L, tokens[i]);
 		}
-		lua_call(L, 1 + num_arg, 1);
+		lua_call(L, 4, 1);
 		if (!lua_toboolean(L, -1))
 			goto QUIT;
 		//process tokens
-
-		//special render function so the text just doesn't appear, shouldn't decrease perfomance at all and should be togglable
-		for (float j = 0; j < g_text.w; j += 0.5) {
-			SDL_RenderClear(renderer);
-			if (background) {
-				SDL_RenderCopy(renderer, background, NULL, NULL);
-				if(text_background)
-					SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
+		if (tokens[0]) {
+			//make sure we empty the last g_text
+			if (g_text.text)
+				SDL_DestroyTexture(g_text.text);
+			g_text.w = 0, g_text.h = 0;
+			if (!strcmp(tokens[0], "go") && tokens[1]) { //most simple directive, switch current_scene
+				s_scene* tmp_scene = NULL;
+				HASH_FIND_STR(scenes, tokens[1], tmp_scene);
+				if (!tmp_scene)
+					AUX_Display("I could not find that place anywhere around me.");
+				else if (tmp_scene != cur_scene) {
+					if (cur_scene) {
+						if (cur_scene->callback_exit > 0) {
+							lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->callback_exit);
+							lua_pushlightuserdata(L, cur_scene);
+							lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
+							lua_setmetatable(L, -2);
+							lua_call(L, 1, 0); //function takes the scene that is is the 'child' of, aka the scene we are leaving
+						}
+						if (cur_scene->on_exit) {
+							AUX_Display(cur_scene->on_exit);
+							AUX_RenderTextProccesing();
+							SDL_Delay(500);
+							SDL_PollEvent(&even);
+							while (!keyboard[SDL_SCANCODE_RETURN])
+								SDL_PollEvent(&even);
+						}
+					}
+					cur_scene = tmp_scene;
+					if (cur_scene->callback_enter > 0) {
+						lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->callback_enter);
+						lua_pushlightuserdata(L, cur_scene);
+						lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
+						lua_setmetatable(L, -2);
+						lua_call(L, 1, 0); //function takes in the scene it is the 'child' of
+					}
+					if (cur_scene->on_enter)
+						AUX_Display(cur_scene->on_enter);
+				}
+				else
+					AUX_Display("I am already here.");
 			}
-			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, j, 25}, & (SDL_Rect){0, resolution_y - g_text.h - 25, j, 25});
-			SDL_RenderPresent(renderer);
-		}
-		for (float i = 25; i < g_text.h; i += 0.25) {
-			SDL_RenderClear(renderer);
-			if (background) {
-				SDL_RenderCopy(renderer, background, NULL, NULL);
-				if (text_background)
-					SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
-			}
-			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, g_text.w, i}, & (SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, i});
-			SDL_RenderPresent(renderer);
+			AUX_RenderTextProccesing();
 		}
 		QUIT:
 		memset(input_buf, 0, MAX_INPUT_SIZE); //reset input_buf
@@ -213,4 +241,45 @@ void flogf(char* format, ...) {
 	vprintf(format, args);
 	vfprintf(logfile, format, args);
 	va_end(args);
+}
+void AUX_Display(char* buffer) {
+	if (g_text.text)
+		SDL_DestroyTexture(g_text.text); //remove current texture from g_text if it is there
+	SDL_Surface* surf = TTF_RenderText_Blended_Wrapped(strd_font, buffer, (SDL_Color) { 255, 255, 255 }, resolution_x);
+	if (surf) {
+		SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
+		s_renderered_text tmp_text = { tex,surf->w,surf->h };
+		g_text = tmp_text; //set the current text to this
+		SDL_FreeSurface(surf);
+	}
+	else
+		flogf("EXCEPTION: Could not generate surface in engine AUX_Display\n");
+}
+void AUX_RenderTextProccesing(void) { //couldn't come up with a better name, this function just renders the current g_text
+	//special render function so the text just doesn't appear, shouldn't decrease perfomance at all and should be togglable
+	for (float j = 0; j < g_text.w; j += 0.5) {
+		SDL_RenderClear(renderer);
+		if (background) {
+			SDL_RenderCopy(renderer, background, NULL, NULL);
+			if (text_background)
+				SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
+		}
+		if (g_text.h - 25 > 5)
+			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, j, 25}, & (SDL_Rect){0, resolution_y - g_text.h - 25, j, 25});
+		else
+			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, j, g_text.h}, & (SDL_Rect){0, resolution_y - g_text.h - 25, j, g_text.h});
+		SDL_RenderPresent(renderer);
+	}
+	if (g_text.h - 25 > 5) {
+		for (float i = 25; i < g_text.h; i += 0.25) {
+			SDL_RenderClear(renderer);
+			if (background) {
+				SDL_RenderCopy(renderer, background, NULL, NULL);
+				if (text_background)
+					SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
+			}
+			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, g_text.w, i}, & (SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, i});
+			SDL_RenderPresent(renderer);
+		}
+	}
 }

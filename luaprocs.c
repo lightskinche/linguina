@@ -176,3 +176,16 @@ int LUAPROC_Set_Background(lua_State* L) { // void set_background(SDL_Texture(us
 	background = tex;
 	return 0;
 }
+int LUAPROC_Wait(lua_State* L) { //void wait(int ms)
+	int ms = luaL_checknumber(L, 1);
+	SDL_Delay(ms);
+	return 0;
+}
+int LUAPROC_Set_CurrentScene(lua_State* L) { //void set_currentscene(s_scene(userdata)* tmp_scene)
+	s_scene* tmp_scene = lua_touserdata(L, 1);
+	if (tmp_scene)
+		cur_scene = tmp_scene;
+	else
+		flogf("LUA EXCEPTION: Attempted to set current scene to a nil value\n");
+	return 0;
+}
