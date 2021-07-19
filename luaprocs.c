@@ -64,72 +64,27 @@ int LUAPROC_Create_Scene(lua_State* L) {// s_scene*(userdata) create_scene(char*
 	char* on_exit = luaL_checkstring(L, 3);
 	char* examine = luaL_checkstring(L, 4);
 	s_location* locations = lua_touserdata(L, 5);
-	s_scene* tmp_scene = calloc(1, sizeof(*tmp_scene));
+	s_scene* tmp_scene = lua_newuserdata(L, sizeof(*tmp_scene));
+	tmp_scene->callback_enter = 0, tmp_scene->callback_exit = 0, tmp_scene->callback_examine = 0; //makes sure no garbage is in there
 	tmp_scene->name = name, tmp_scene->on_enter = on_enter, tmp_scene->on_exit = on_exit, tmp_scene->examine = examine, tmp_scene->locations = locations;
-	HASH_ADD_KEYPTR(hh, unloaded_scenes, tmp_scene->name, strlen(tmp_scene->name), tmp_scene);
-	lua_pushlightuserdata(L, tmp_scene);
 	lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
-	lua_setmetatable(L, 6);
+	lua_setmetatable(L, -2);
 	return 1;
 }
-int LUAPROC_Load_Scene(lua_State* L) { // void load_scene(s_scene(userdata)* tmp_scene)
-	s_scene* tmp_scene = lua_touserdata(L, 1);
-	if (tmp_scene) {
-		HASH_DELETE(hh, unloaded_scenes, tmp_scene);
-		HASH_ADD_KEYPTR(hh, scenes, tmp_scene->name, strlen(tmp_scene->name), tmp_scene);
-		return 0;
-	}
-	flogf("LUA EXCEPTION: Attempted to load a nil type scene\n");
-	return 0;
-}
-int LUAPROC_Unload_Scene(lua_State* L) {
-	s_scene* tmp_scene = lua_touserdata(L, 1);
-	if (tmp_scene) {
-		HASH_DELETE(hh, scenes, tmp_scene);
-		HASH_ADD_KEYPTR(hh, unloaded_scenes, tmp_scene->name, strlen(tmp_scene->name), tmp_scene);
-		return 0;
-	}
-	flogf("LUA EXCEPTION: Attempted to unload a nil type scene\n");
-	return 0;
-}
-int LUAPROC_Destroy_Scene(lua_State* L) { // void destroy_scene(s_scene(userdata)* tmp_scene) ***HAS TO BE AN UNLOADED SCENE IN unloaded_scenes ***
-	s_scene* tmp_scene = lua_touserdata(L, 1);
-	if (tmp_scene) {
-		HASH_DELETE(hh, unloaded_scenes, tmp_scene);
-		free(tmp_scene); //def update this if s_scene starts having more pointers inside of it
-		return 0;
-	}
-	else {
-		flogf("LUA EXCEPTION: Attempted to destroy nil scene\n");
-		return 0;
-	}
-}
-int LUAPROC_Find_Scene_Unloaded(lua_State* L) { // s_scene*(userdata) find_scene_u(char* name)
-	char* name = luaL_checkstring(L, 1);
-	s_scene* tmp_scene = NULL;
-	HASH_FIND_STR(unloaded_scenes, name, tmp_scene);
-	if (tmp_scene) {
-		lua_pushlightuserdata(L, tmp_scene);
-		return 1;
-	}
-	else {
-		flogf("LUA EXCEPTION: Scene %s was not found in unloaded_scenes\n", name);
-		lua_pushnil(L);
-		return 1;
-	}
-}
 //location maps will actually be a subtype with a different __index metamethod that can take in numbers
-int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_locationmap(int w, int h, ...)
+int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_locationmap(int w, int h, int offsetx, int offsety, ...)
 	int width = luaL_checknumber(L, 1);
 	int height = luaL_checknumber(L, 2);
+	int offsetx = luaL_checknumber(L, 3);
+	int offsety = luaL_checknumber(L, 4);
 	s_location* locations = calloc(width * height, sizeof(s_location));
 	for (int i = 0; i < height; ++i) {
 		for (int j = 0; j < width; ++j) {
-			lua_rawgeti(L, 3 + j + (i * width), 1);
-			lua_rawgeti(L, 3 + j + (i * width), 2);
+			lua_rawgeti(L, 5 + j + (i * width), 1);
+			lua_rawgeti(L, 5 + j + (i * width), 2);
 			char* examine = lua_tostring(L, -2);
 			char* on_enter = lua_tostring(L, -1);
-			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter, locations[j + (i * width)].map = 1;
+			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter, locations[j + (i * width)].orginal_map = locations;
 			if (i > 0)
 				if(locations[j + ((i - 1) * width)].examine)
 					locations[j + (i * width)].north = &locations[j + ((i - 1) * width)];
@@ -146,26 +101,18 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 				//j, i, &locations[j + (i * width)], locations[j + (i * width)].north, locations[j + (i * width)].south, locations[j + (i * width)].west, locations[j + (i * width)].east);
 		}
 	}
-	lua_pushlightuserdata(L, locations); //return this map of locations
-	lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable");
-	lua_setmetatable(L, -2);
-	return 1;
-}
-int LUAPROC_Create_Location(lua_State* L) { // location(userdata)* create_location(char* examine, char* on_enter, s_thing* things)
-	char* examine = luaL_checkstring(L, 1);
-	char* on_enter = luaL_checkstring(L, 2);
-	s_thing* things = lua_touserdata(L, 3);
-	s_location* location = calloc(1, sizeof(location));
-	location->examine = examine, location->on_enter = on_enter, location->things = things;
-	lua_pushlightuserdata(L, location);
-	lua_getfield(L, LUA_REGISTRYINDEX, "location_metatable");
-	lua_setmetatable(L, -2);
+	if(offsetx > 0 && offsety > 0)
+		lua_pushlightuserdata(L, &locations[offsetx - 1 + ((offsety - 1) * width)]); //return this map of locations
+	else {
+		flogf("LUA EXCEPTION: Invalid index to location map, subscript must be greater than 0\n");
+		lua_pushlightuserdata(L, locations);
+	}
 	return 1;
 }
 int LUAPROC_Destroy_Location(lua_State* L) { // void destroy_location(s_location(userdata)* tmp_location)
 	s_location* tmp_location = lua_touserdata(L, 1);
 	if (tmp_location)
-		free(tmp_location);
+		free(tmp_location->orginal_map);
 	else
 		flogf("LUA EXCEPTION: Attempted to destroy nil 'location' or 'locationmap'\n");
 	return 0;

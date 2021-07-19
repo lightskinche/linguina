@@ -1,77 +1,37 @@
 #include "mainheader.h"
 //this file is for random aux functions, could be anything
-
+static const struct luaL_reg engine_lib[] = {
+	{"log", LUAPROC_Log},
+	{"create_scene", LUAPROC_Create_Scene},
+	{"create_locationmap", LUAPROC_Create_LocationMap},
+	{"destroy_locationmap", LUAPROC_Destroy_Location},
+	{"wait", LUAPROC_Wait},
+	{"display", LUAPROC_Display},
+	{"load_texture", LUAPROC_Load_Texture},
+	{"destroy_texture", LUAPROC_Destroy_Texture},
+	{"set_background", LUAPROC_Set_Background},
+	{"set_currentscene", LUAPROC_Set_CurrentScene},
+    {NULL, NULL}
+};
+static const struct luaL_reg scene_methods[] = {
+	{"load",METAPROC_Load_Scene},
+	{"unload",METAPROC_Unload_Scene},
+	{"get", METAPROC_Getter_Scene},
+	{"set", METAPROC_Setter_Scene},
+	{NULL, NULL}
+};
 //we dont need any parameters since all variables we are using are global variables, this function is mainly used for ease-of-reading
 inline void AUX_Load_Libraries(void) { 
 	luaL_openlibs(L); //load standered library
-	//load and set up custom type metatables
-	//for scenes
-	luaL_newmetatable(L, "scene_metatable");
-	lua_pushcfunction(L, METAPROC_Index_Scene);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, METAPROC_NewIndex_Scene);
-	lua_setfield(L, -2, "__newindex");
-	lua_pushcfunction(L, METAPROC_Tostring_Scene);
-	lua_setfield(L, -2, "__tostring");
-	//for location
-	luaL_newmetatable(L, "location_metatable");
-	lua_pushcfunction(L, METAPROC_Index_Location);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, METAPROC_NewIndex_LocationS);
-	lua_setfield(L, -2, "__newindex");
-	lua_pushcfunction(L, METAPROC_Tostring_LocationS);
-	lua_setfield(L, -2, "__tostring");
-	//for locationmap
-	luaL_newmetatable(L, "locationmap_metatable");
-	lua_pushcfunction(L, METAPROC_Index_LocationMap);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, METAPROC_NewIndex_LocationS);
-	lua_setfield(L, -2, "__newindex");
-	lua_pushcfunction(L, METAPROC_Tostring_LocationS);
-	lua_setfield(L, -2, "__tostring");
-	lua_settop(L, 0);
 	//now we load our SHARED/GLOBAL lua functions 
-	lua_pushcfunction(L, LUAPROC_Log);
-	lua_setglobal(L, "log");
-
-	lua_pushcfunction(L, LUAPROC_Create_Scene);
-	lua_setglobal(L, "create_scene");
-
-	lua_pushcfunction(L, LUAPROC_Destroy_Scene);
-	lua_setglobal(L, "destroy_scene");
-
-	lua_pushcfunction(L, LUAPROC_Load_Scene);
-	lua_setglobal(L, "load_scene");
-
-	lua_pushcfunction(L, LUAPROC_Unload_Scene);
-	lua_setglobal(L, "unload_scene");
-
-	lua_pushcfunction(L, LUAPROC_Find_Scene_Unloaded);
-	lua_setglobal(L, "find_scene_u");
-
-	lua_pushcfunction(L, LUAPROC_Create_LocationMap);
-	lua_setglobal(L, "create_locationmap");
-
-	lua_pushcfunction(L, LUAPROC_Create_Location);
-	lua_setglobal(L, "create_location");
-
-	lua_pushcfunction(L, LUAPROC_Destroy_Location);
-	lua_setglobal(L, "destroy_location");
-
-	lua_pushcfunction(L, LUAPROC_Wait);
-	lua_setglobal(L, "wait");
-	
-	lua_pushcfunction(L, LUAPROC_Display);
-	lua_setglobal(L, "dipslay");
-
-	lua_pushcfunction(L, LUAPROC_Destroy_Texture);
-	lua_setglobal(L, "destroy_texture");
-
-	lua_pushcfunction(L, LUAPROC_Set_Background);
-	lua_setglobal(L, "set_background");
-
-	lua_pushcfunction(L, LUAPROC_Set_CurrentScene);
-	lua_setglobal(L, "set_currentscene");
+	luaL_openlib(L, "engine", engine_lib, 0);
+	//now lets create some metatables
+	luaL_newmetatable(L, "scene_metatable");
+	luaL_newmetatable(L, "scene_metamethods");
+	luaL_openlib(L, NULL, scene_methods, 0); //should set methods of scene_metamethods which is the __index for scene_metatable
+	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, METAPROC_Gc_Scene);
+	lua_setfield(L, -2, "__gc");
 }
 
 void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' function and moves the text-based game forward
@@ -113,11 +73,8 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 		}
 		//run textmain 
 		lua_rawgeti(L, LUA_REGISTRYINDEX, textmain_ref);
-		//set up 'state' table, it has different functions then main
-		lua_newtable(L);
 		if (receving_input) {
 			lua_pushstring(L, "standered");
-			lua_setfield(L, 2, "mode");
 			//lua_pushcfunction(L, f);
 			//lua_setfield(L, 2, "func");
 			//push input buffer
@@ -128,7 +85,6 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 			if (g_err_text.text)
 				SDL_DestroyTexture(g_err_text.text);
 			lua_pushstring(L, "confirmation");
-			lua_setfield(L, 2, "mode");
 			lua_pushstring(L, input_buf);
 			lua_call(L, 2, 2);
 			receving_input = !lua_toboolean(L, -2);
@@ -199,9 +155,7 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 					if (cur_scene) {
 						if (cur_scene->callback_exit > 0) {
 							lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->callback_exit);
-							lua_pushlightuserdata(L, cur_scene);
-							lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
-							lua_setmetatable(L, -2);
+							lua_pushstring(L, cur_scene->name);
 							lua_call(L, 1, 0); //function takes the scene that is is the 'child' of, aka the scene we are leaving
 						}
 						if (cur_scene->on_exit) {
@@ -216,9 +170,7 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 					cur_scene = tmp_scene;
 					if (cur_scene->callback_enter > 0) {
 						lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->callback_enter);
-						lua_pushlightuserdata(L, cur_scene);
-						lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
-						lua_setmetatable(L, -2);
+						lua_pushstring(L, cur_scene->name);
 						lua_call(L, 1, 0); //function takes in the scene it is the 'child' of
 					}
 					if (cur_scene->on_enter)
@@ -229,7 +181,7 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 			}
 			AUX_RenderTextProccesing();
 		}
-		QUIT:
+	QUIT:
 		memset(input_buf, 0, MAX_INPUT_SIZE); //reset input_buf
 		lua_settop(L, 0);
 		receving_input = 1;

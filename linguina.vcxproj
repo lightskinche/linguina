@@ -148,7 +148,7 @@
     <ClCompile Include="auxfuncs.c" />
     <ClCompile Include="luaprocs.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="metaproc.c" />
+    <ClCompile Include="metaprocs.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mainheader.h" />

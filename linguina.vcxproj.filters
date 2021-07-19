@@ -24,7 +24,7 @@
     <ClCompile Include="luaprocs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="metaproc.c">
+    <ClCompile Include="metaprocs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
