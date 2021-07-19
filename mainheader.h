@@ -69,7 +69,6 @@ struct s_scene {
 struct s_location {
 	char* examine, *on_enter;  //locations don't have names, they have descriptions and things within them
 	s_location* north, *south, *west, *east;
-	int map;
 	s_thing* things;
 };
 struct s_thing {
@@ -97,7 +96,6 @@ extern int LUAPROC_Destroy_Scene(lua_State* L);
 extern int LUAPROC_Find_Scene_Unloaded(lua_State* L);
 
 extern int LUAPROC_Create_LocationMap(lua_State* L);
-extern int LUAPROC_Create_Location(lua_State* L);
 extern int LUAPROC_Destroy_Location(lua_State* L);
 
 extern int LUAPROC_Wait(lua_State* L);
@@ -108,8 +106,5 @@ extern int METAPROC_NewIndex_Scene(lua_State* L);
 extern int METAPROC_Tostring_Scene(lua_State* L);
 
 extern int METAPROC_Index_LocationMap(lua_State* L);
-
-extern int METAPROC_Index_Location(lua_State* L);
-
-extern int METAPROC_NewIndex_LocationS(lua_State* L);
-extern int METAPROC_Tostring_LocationS(lua_State* L);
+extern int METAPROC_NewIndex_LocationMap(lua_State* L);
+extern int METAPROC_Tostring_LocationMap(lua_State* L);

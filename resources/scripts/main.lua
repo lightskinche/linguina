@@ -1,7 +1,9 @@
 --this function runs on startup
-function start(state)
-   roblox_t = state.load_texture("resources/test.png")
+function start()
+   roblox_t = load_texture("resources/test.png")
    test = create_scene("test","I walked into the testing area, it was nice.","I left.","examine", nil)
+   test.examine.locations = create_locationmap(1,1,{"asdf","fghj"})
+   log(tostring(test.examine.locations))
    test.callback_enter = function(scene)set_background(roblox_t,nil)end
    load_scene(test)
    nullzone = create_scene("null","I walked into the null zone, nothingness took me over","I left the nullzone","examine",nil)
@@ -12,8 +14,8 @@ function start(state)
    return true
 end
 --this function runs during the text input loop
-function textmain(state, input_buf) --note that input_buf is not converted into tokens like in main
-    if state.mode == "confirmation" then
+function textmain(mode, input_buf) --note that input_buf is not converted into tokens like in main
+    if mode == "confirmation" then
 	   if input_buf == "go" then --if the only thing they put is "go"
 			return false, "Give a location I should go to. (or do help go)"
 	   else

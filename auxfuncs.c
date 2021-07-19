@@ -13,21 +13,13 @@ inline void AUX_Load_Libraries(void) {
 	lua_setfield(L, -2, "__newindex");
 	lua_pushcfunction(L, METAPROC_Tostring_Scene);
 	lua_setfield(L, -2, "__tostring");
-	//for location
-	luaL_newmetatable(L, "location_metatable");
-	lua_pushcfunction(L, METAPROC_Index_Location);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, METAPROC_NewIndex_LocationS);
-	lua_setfield(L, -2, "__newindex");
-	lua_pushcfunction(L, METAPROC_Tostring_LocationS);
-	lua_setfield(L, -2, "__tostring");
 	//for locationmap
 	luaL_newmetatable(L, "locationmap_metatable");
 	lua_pushcfunction(L, METAPROC_Index_LocationMap);
 	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, METAPROC_NewIndex_LocationS);
+	lua_pushcfunction(L, METAPROC_NewIndex_LocationMap);
 	lua_setfield(L, -2, "__newindex");
-	lua_pushcfunction(L, METAPROC_Tostring_LocationS);
+	lua_pushcfunction(L, METAPROC_Tostring_LocationMap);
 	lua_setfield(L, -2, "__tostring");
 	lua_settop(L, 0);
 	//now we load our SHARED/GLOBAL lua functions 
@@ -52,9 +44,6 @@ inline void AUX_Load_Libraries(void) {
 	lua_pushcfunction(L, LUAPROC_Create_LocationMap);
 	lua_setglobal(L, "create_locationmap");
 
-	lua_pushcfunction(L, LUAPROC_Create_Location);
-	lua_setglobal(L, "create_location");
-
 	lua_pushcfunction(L, LUAPROC_Destroy_Location);
 	lua_setglobal(L, "destroy_location");
 
@@ -64,6 +53,9 @@ inline void AUX_Load_Libraries(void) {
 	lua_pushcfunction(L, LUAPROC_Display);
 	lua_setglobal(L, "dipslay");
 
+	lua_pushcfunction(L, LUAPROC_Load_Texture);
+	lua_setglobal(L, "load_texture");
+
 	lua_pushcfunction(L, LUAPROC_Destroy_Texture);
 	lua_setglobal(L, "destroy_texture");
 
@@ -72,6 +64,8 @@ inline void AUX_Load_Libraries(void) {
 
 	lua_pushcfunction(L, LUAPROC_Set_CurrentScene);
 	lua_setglobal(L, "set_currentscene");
+
+	lua_settop(L, 0); //empty the stack just to be safe
 }
 
 void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' function and moves the text-based game forward
@@ -114,10 +108,8 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 		//run textmain 
 		lua_rawgeti(L, LUA_REGISTRYINDEX, textmain_ref);
 		//set up 'state' table, it has different functions then main
-		lua_newtable(L);
 		if (receving_input) {
 			lua_pushstring(L, "standered");
-			lua_setfield(L, 2, "mode");
 			//lua_pushcfunction(L, f);
 			//lua_setfield(L, 2, "func");
 			//push input buffer
@@ -128,7 +120,6 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 			if (g_err_text.text)
 				SDL_DestroyTexture(g_err_text.text);
 			lua_pushstring(L, "confirmation");
-			lua_setfield(L, 2, "mode");
 			lua_pushstring(L, input_buf);
 			lua_call(L, 2, 2);
 			receving_input = !lua_toboolean(L, -2);

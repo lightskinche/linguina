@@ -5,33 +5,23 @@ int METAPROC_Index_Scene(lua_State* L) { //basically just allows you to get stuf
 	s_scene* tmp_scene = lua_touserdata(L, 1);
 	char* member = luaL_checkstring(L, 2);
 	if (tmp_scene) {
-		if (!strcmp(member, "name"))
-			lua_pushstring(L, tmp_scene->name);
-		else if (!strcmp(member, "on_enter"))
-			lua_pushstring(L, tmp_scene->on_enter);
-		else if (!strcmp(member, "on_enter"))
-			lua_pushstring(L, tmp_scene->on_exit);
-		else if (!strcmp(member, "examine"))
-			lua_pushstring(L, tmp_scene->examine);
-		else if (!strcmp(member, "callback_enter"))
-			lua_pushboolean(L, tmp_scene->callback_enter & 1);
-		else if (!strcmp(member, "callback_exit"))
-			lua_pushboolean(L, tmp_scene->callback_exit & 1);
-		else if (!strcmp(member, "callback_examine"))
-			lua_pushboolean(L, tmp_scene->callback_examine & 1);
-		else if (!strcmp(member, "locations")) {
-			lua_pushlightuserdata(L, tmp_scene->locations);
-			if (tmp_scene->locations->map) //now we are able to tell if we were given a locationmap or a location since that is pretty important
-				lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable"); 
-			else
-				lua_getfield(L, LUA_REGISTRYINDEX, "location_metatable");
-			lua_setmetatable(L, -2); //turns out _that if we don't do this then we can't index or do anything with [scene_name].locations
-		}
-		else {
-			flogf("LUA EXCEPTION: Attempted to index nonexistant member %s in type 'scene'\n", member);
-			lua_pushnil(L);
-			return 1;
-		}
+		lua_newtable(L);
+		lua_pushstring(L, tmp_scene->name);
+		lua_setfield(L, -2, "name");
+		lua_pushstring(L, tmp_scene->on_enter);
+		lua_setfield(L, -2, "on_enter");
+		lua_pushstring(L, tmp_scene->on_exit);
+		lua_setfield(L, -2, "on_exit");
+		lua_pushstring(L, tmp_scene->examine);
+		lua_setfield(L, -2, "examine");
+		lua_pushlightuserdata(L, tmp_scene->locations);
+		lua_setfield(L, -2, "locations");
+		lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_scene->callback_enter);
+		lua_setfield(L, -2, "callback_enter");
+		lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_scene->callback_exit);
+		lua_setfield(L, -2, "callback_exit");
+		lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_scene->callback_examine);
+		lua_setfield(L, -2, "callback_examine");
 		return 1;
 	}
 	flogf("LUA EXCEPTION: Attempted to index nil scene\n");
@@ -70,6 +60,10 @@ int METAPROC_NewIndex_Scene(lua_State* L) { //basically just allows you to set s
 			luaL_checktype(L, 3, LUA_TFUNCTION);
 			tmp_scene->callback_examine = luaL_ref(L, LUA_REGISTRYINDEX);
 		}
+		else if (!strcmp(member, "locations")) {
+			s_location* locations = lua_touserdata;
+			tmp_scene->locations = locations;
+		}
 		else {
 			flogf("LUA EXCEPTION: Attempted to set nonexistant member %s in type 'scene'\n", member);
 			return 0;
@@ -93,46 +87,13 @@ int METAPROC_Tostring_Scene(lua_State* L) { // char* __tostring(s_scene(userdata
 //location functions
 int METAPROC_Index_LocationMap(lua_State* L) { // location(userdata)* | char* __index(location(userdata)* tmp_location, int | char* member)
 	s_location* tmp_location = lua_touserdata(L, 1);
-	if (tmp_location) {
-		switch (lua_type(L, 2)) {
-		case LUA_TNUMBER: //in this case, we want to switch the location userdata is pointing to
-			lua_pushlightuserdata(L, &tmp_location[(int)lua_tonumber(L, 2) - 1]);
-			return 1;
-			break;
-		case LUA_TSTRING:
-		{
-			char* member = luaL_checkstring(L, 2);
-			if (!strcmp(member, "examine"))
-				lua_pushstring(L, tmp_location->examine);
-			else if (!strcmp(member, "on_enter"))
-				lua_pushstring(L, tmp_location->on_enter);
-			else if (!strcmp(member, "north"))
-				lua_pushlightuserdata(L, tmp_location->north);
-			else if (!strcmp(member, "south"))
-				lua_pushlightuserdata(L, tmp_location->south);
-			else if (!strcmp(member, "west"))
-				lua_pushlightuserdata(L, tmp_location->west);
-			else if (!strcmp(member, "east"))
-				lua_pushlightuserdata(L, tmp_location->east);
-			else if (!strcmp(member, "locations")) {
-				lua_pushlightuserdata(L, tmp_location); //pretty sure we don't need to set a metatable for this
-			}
-			else{
-				flogf("LUA EXCEPTION: Attempted to access member %s which does not exist in a type 'locationmap'\n", member);
-				lua_pushnil(L);
-				return 1;
-			}
-			return 1;
-		}
-		default:
-			flogf("LUA EXCEPTION: Attempted to index a type 'locationmap' with a nonnumber and nonstring type\n");
-		}
-	}
-	flogf("LUA EXCEPTION: Attempted to index a nil 'locationmap'\n");
-	lua_pushnil(L);
+	lua_pushlightuserdata(L, tmp_location);
+	lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable");
+	lua_setmetatable(L, -2);
+
 	return 1;
 }
-int METAPROC_NewIndex_LocationS(lua_State* L) { // location(userdata)* | char* __index(location(userdata)* tmp_location, int | char* member)
+int METAPROC_NewIndex_LocationMap(lua_State* L) { // location(userdata)* | char* __index(location(userdata)* tmp_location, int | char* member)
 	s_location* tmp_location = lua_touserdata(L, 1);
 	if (tmp_location) {
 		char* member = luaL_checkstring(L, 2);
@@ -149,48 +110,19 @@ int METAPROC_NewIndex_LocationS(lua_State* L) { // location(userdata)* | char* _
 			tmp_location->things = things;
 		}
 		else if(strcmp(member, "locations"))
-			flogf("LUA EXCEPTION: Attempted to access invalid member %s in type 'location' or 'locationmap'\n", member);	
+			flogf("LUA EXCEPTION: Attempted to access invalid member %s in a'locationmap'\n", member);	
 		return 0;
 	}
 	flogf("LUA EXCEPTION: Attempted to index a nil type'\n");
 	return 0;
 }
-int METAPROC_Index_Location(lua_State* L) { // char* __indedx(location(userdata)* tmp_location, char* member)
-	s_location* tmp_location = lua_touserdata(L, 1);
-	char* member = luaL_checkstring(L, 2);
-	if (tmp_location) {
-		if (!strcmp(member, "examine"))
-			lua_pushstring(L, tmp_location->examine);
-		else if (!strcmp(member, "on_enter"))
-			lua_pushstring(L, tmp_location->on_enter);
-		else if (!strcmp(member, "north"))
-			lua_pushlightuserdata(L, tmp_location->north);
-		else if (!strcmp(member, "south"))
-			lua_pushlightuserdata(L, tmp_location->south);
-		else if (!strcmp(member, "west"))
-			lua_pushlightuserdata(L, tmp_location->west);
-		else if (!strcmp(member, "east"))
-			lua_pushlightuserdata(L, tmp_location->east);
-		else if (!strcmp(member, "location"))
-			lua_pushlightuserdata(L, tmp_location);
-		else {
-			flogf("LUA EXCEPTION: Attempted to access member %s which does not exist in a type 'location'\n", member);
-			lua_pushnil(L);
-			return 1;
-		}
-		return 1;
-	}
-	flogf("LUA EXCEPTION: Attempted to index a nil 'location'\n");
-	lua_pushnil(L);
-	return 1;
-}
-int METAPROC_Tostring_LocationS(lua_State* L) { // char* __tostring(s_location(userdata)* tmp_location)
+int METAPROC_Tostring_LocationMap(lua_State* L) { // char* __tostring(s_location(userdata)* tmp_location)
 	s_location* tmp_location = lua_touserdata(L, 1);
 	if (tmp_location) {
 		lua_pushstring(L, tmp_location->examine);
 		return 1;
 	}
-	flogf("LUA EXCEPTION: Attempted __tostring on a nil type"); //don't think these will ever, ever be called but just in case
+	flogf("LUA EXCEPTION: Attempted __tostring on a nil 'locationmap'"); //don't think these will ever, ever be called but just in case
 	lua_pushnil(L);
 	return 1;
 }

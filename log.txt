@@ -1,0 +1,3 @@
+Location at [x:0 y:0] is address 04281A08 and has north 00000000, south 00000000, east 00000000, and west 00000000
+LUA DEBUG: test
+LUA EXCEPTION: Attempted to access invalid member callback_enter in a'locationmap'

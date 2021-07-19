@@ -65,12 +65,7 @@ int main(void) {
 	}
 	//let's run the start function
 	lua_rawgeti(L, LUA_REGISTRYINDEX, start_ref);
-	lua_newtable(L);
-	lua_pushcfunction(L, LUAPROC_Load_Texture);
-	lua_setfield(L, -2, "load_texture");
-	lua_pushcfunction(L, LUAPROC_Destroy_Texture);
-	lua_setfield(L, -2, "destroy_texture");
-	lua_call(L, 1, 2);
+	lua_call(L, 0, 2);
 	if (!lua_toboolean(L, -2)) {
 		flogf("ERROR: %s\n", lua_tostring(L, -1));
 		return 1;

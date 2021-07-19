@@ -129,36 +129,22 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 			lua_rawgeti(L, 3 + j + (i * width), 2);
 			char* examine = lua_tostring(L, -2);
 			char* on_enter = lua_tostring(L, -1);
-			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter, locations[j + (i * width)].map = 1;
+			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter;
 			if (i > 0)
-				if(locations[j + ((i - 1) * width)].examine)
-					locations[j + (i * width)].north = &locations[j + ((i - 1) * width)];
+				locations[j + (i * width)].north = &locations[j + ((i - 1) * width)];
 			if (i < height - 1)
-				if(locations[j + ((i + 1) * width)].examine)
-					locations[j + (i * width)].south = &locations[j + ((i + 1) * width)];
+				locations[j + (i * width)].south = &locations[j + ((i + 1) * width)];
+
 			if (j > 0)
-				if(locations[(j - 1) + (i * width)].examine)
-					locations[j + (i * width)].west = &locations[(j - 1) + (i * width)];
+				locations[j + (i * width)].east = &locations[j - 1 + (i * width)];
 			if (j < width - 1)
-				if(locations[(j + 1) + (i * width)].examine)
-					locations[j + (i * width)].east = &locations[(j + 1) + (i * width)];
-			//printf("Location at [x:%d y:%d] is address %p and has north %p, south %p, east %p, and west %p\n", 
-				//j, i, &locations[j + (i * width)], locations[j + (i * width)].north, locations[j + (i * width)].south, locations[j + (i * width)].west, locations[j + (i * width)].east);
+				locations[j + (i * width)].west = &locations[j + 1 + (i * width)];
+			flogf("Location at [x:%d y:%d] is address %p and has north %p, south %p, east %p, and west %p\n", 
+				j, i, &locations[j + (i * width)], locations[j + (i * width)].north, locations[j + (i * width)].south, locations[j + (i * width)].west, locations[j + (i * width)].east);
 		}
 	}
 	lua_pushlightuserdata(L, locations); //return this map of locations
 	lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable");
-	lua_setmetatable(L, -2);
-	return 1;
-}
-int LUAPROC_Create_Location(lua_State* L) { // location(userdata)* create_location(char* examine, char* on_enter, s_thing* things)
-	char* examine = luaL_checkstring(L, 1);
-	char* on_enter = luaL_checkstring(L, 2);
-	s_thing* things = lua_touserdata(L, 3);
-	s_location* location = calloc(1, sizeof(location));
-	location->examine = examine, location->on_enter = on_enter, location->things = things;
-	lua_pushlightuserdata(L, location);
-	lua_getfield(L, LUA_REGISTRYINDEX, "location_metatable");
 	lua_setmetatable(L, -2);
 	return 1;
 }
