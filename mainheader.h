@@ -13,17 +13,23 @@
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
+//include the datastructures we will be using
+#include "utlist.h"
+#include "uthash.h"
+//some macros
 #define MAX_BUFFER_SIZE 512 //512 is an all-around good amount for most char arrays
-//some macros 
-#define ERR_FLE_MIS(filename) printf("ERROR: File '%s' was not found. Stopping.", filename) //used so engine errors are uniform
+#define MAX_INPUT_SIZE 64
 //important globals
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern SDL_Event even;
 extern TTF_Font* strd_font;
-extern char entry_symbol[MAX_BUFFER_SIZE], entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
-extern char input_buf[MAX_BUFFER_SIZE];
-extern int resolution_x, resolution_y, main_ref;
+extern FILE* logfile;
+extern char entry_symbol[MAX_BUFFER_SIZE], textmain_symbol[MAX_BUFFER_SIZE], start_symbol[MAX_BUFFER_SIZE];
+extern char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
+extern char input_buf[MAX_INPUT_SIZE];
+extern int resolution_x, resolution_y;
+extern int main_ref, textmain_ref, start_ref;
 //most important global, lua itself!
 extern lua_State* L;
 //important custom types
@@ -37,9 +43,54 @@ enum e_types {
 	T_AUDIO = 3, //this is an audio stream that is loaded in ram
 	T_FONT = 4 //self-explainatory, this is a font
 };
+typedef struct s_renderered_text s_renderered_text;
+
+struct s_renderered_text { //this is for rendered text, meaning text that has already been created as a texture and just needs to be renderered
+	SDL_Texture* text;
+	int w, h;
+};
+extern s_renderered_text g_text; 
+extern s_renderered_text g_err_text; //special text that is meant for use with 'textmain' when it denies the user the ability to submit or press enter
+//important strucutres
+typedef struct s_scene s_scene;
+typedef struct s_location s_location;
+typedef struct s_thing s_thing;
+
+struct s_scene {
+	char* name, *on_enter, *on_exit, *examine;
+	s_location* locations;
+	UT_hash_handle hh;
+};
+struct s_location {
+	char* examine, *on_enter;  //locations don't have names, they have descriptions and things within them
+	s_location* north, *south, *west, *east;
+};
+struct s_thing {
+	char* name, *examine;
+};
+extern s_scene* unloaded_scenes, *scenes;
 //important global functions
 extern inline void AUX_Load_Libraries(void);
 extern void AUX_Handle_GameLoop(void);
+extern void flogf(char* format, ...); //special function that writes to stdout and to log.txt
 //lua functions
-extern int LUAPROC_Load_Image(lua_State* L);
-extern int LUAPROC_Create_Texture(lua_State* L);
+extern int LUAPROC_Display(lua_State* L);
+extern int LUAPROC_Log(lua_State* L);
+
+extern int LUAPROC_Create_Scene(lua_State* L);
+extern int LUAPROC_Destroy_Scene(lua_State* L);
+extern int LUAPROC_Find_Scene_Unloaded(lua_State* L);
+
+extern int LUAPROC_Create_LocationMap(lua_State* L);
+extern int LUAPROC_Create_Location(lua_State* L);
+//metamethods
+extern int METAPROC_Index_Scene(lua_State* L);
+extern int METAPROC_NewIndex_Scene(lua_State* L);
+extern int METAPROC_Tostring_Scene(lua_State* L);
+
+extern int METAPROC_Index_LocationMap(lua_State* L);
+
+extern int METAPROC_Index_Location(lua_State* L);
+
+extern int METAPROC_NewIndex_LocationS(lua_State* L);
+extern int METAPROC_Tostring_LocationS(lua_State* L);

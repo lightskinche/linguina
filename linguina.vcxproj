@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)include/lua;$(SolutionDir)include/sdl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include/lua;$(SolutionDir)include/sdl;$(SolutionDir)include/datastructures</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)include/lua;$(SolutionDir)include/sdl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include/lua;$(SolutionDir)include/sdl;$(SolutionDir)include/datastructures</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,6 +148,7 @@
     <ClCompile Include="auxfuncs.c" />
     <ClCompile Include="luaprocs.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="metaproc.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mainheader.h" />

@@ -1,11 +1,20 @@
 #include "mainheader.h"
 //define some externs
-char entry_symbol[MAX_BUFFER_SIZE], entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
-char input_buf[MAX_BUFFER_SIZE];
-int resolution_x = 0, resolution_y = 0, main_ref = 0; lua_State* L = NULL;
+char main_symbol[MAX_BUFFER_SIZE], textmain_symbol[MAX_BUFFER_SIZE], start_symbol[MAX_BUFFER_SIZE];
+char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
+char input_buf[MAX_INPUT_SIZE];
+
+int resolution_x = 0, resolution_y = 0; lua_State* L = NULL;
+int main_ref = 0, textmain_ref = 0, start_ref = 0;
+
 SDL_Window* window = NULL; SDL_Renderer* renderer = NULL; 
 SDL_Event even; TTF_Font* strd_font = NULL;
+
+s_renderered_text g_text, g_err_text;
+s_scene* unloaded_scenes = NULL, *scenes = NULL;
+FILE* logfile;
 int main(void) {
+	logfile = fopen("log.txt", "w"); //should close automatically on program termination since the os will clean it up
 	SDL_Init(SDL_INIT_EVERYTHING);
 	TTF_Init();
 	//open engine.config
@@ -13,11 +22,11 @@ int main(void) {
 		FILE* fp = fopen("engine.config", "r");
 		if (fp) {
 			//get everything we need from the config
-			fscanf(fp, "%s\n%s\n%s\n%s\n%d %d\n", entry_symbol, entry_file, scripts_path, program_name, &resolution_x, &resolution_y);
+			fscanf(fp, "%s\n%s\n%s\n%s\n%s\n%s\n%d %d\n", start_symbol, textmain_symbol, main_symbol, entry_file, scripts_path, program_name, &resolution_x, &resolution_y);
 			fclose(fp);
 		}
 		else {
-			ERR_FLE_MIS("engine.config");
+			flogf("ERROR: File 'engine.config' was not found. Stopping.");
 			return 1;
 		}
 	}
@@ -30,17 +39,38 @@ int main(void) {
 	L = lua_open();
 	AUX_Load_Libraries();
 	if(luaL_loadfile(L, entry_file) || lua_pcall(L, 0, 0, 0)){
-		printf("LUA ERROR: %s\n", lua_tostring(L,-1));
+		flogf("LUA ERROR: %s\n", lua_tostring(L,-1));
 		return 1;
 	}
-	lua_getglobal(L, entry_symbol);
+	//load important symbols
+	lua_getglobal(L, main_symbol);
 	main_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	lua_getglobal(L, textmain_symbol);
+	textmain_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	lua_getglobal(L, start_symbol);
+	start_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 	if (main_ref == -1) {
-		printf("LUA ERROR: Could not find entry point '%s' in %s", entry_symbol, entry_file);
+		flogf("LUA ERROR: Could not find function '%s' in %s\n", main_symbol, entry_file);
 		return 1;
 	}
+	if (textmain_ref == -1) {
+		flogf("LUA ERROR: Could not find function '%s' in %s\n", textmain_symbol, entry_file);
+		return 1;
+	}
+	if (start_ref == -1) {
+		flogf("LUA ERROR: Could not find function '%s' in %s\n", start_symbol, entry_file);
+	}
+	//let's run the start function
+	lua_rawgeti(L, LUA_REGISTRYINDEX, start_ref);
+	lua_newtable(L);
+	lua_call(L, 1, 2);
+	if (!lua_toboolean(L, -2)) {
+		flogf("ERROR: %s\n", lua_tostring(L, -1));
+		return 1;
+	}
+	lua_settop(L, 0);
 	//make sure we clear the input buf, we don't want any junk
-	memset(input_buf, 0, MAX_BUFFER_SIZE);
+	memset(input_buf, 0, MAX_INPUT_SIZE);
 	while (1) {
 		AUX_Handle_GameLoop();
 	}

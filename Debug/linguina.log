@@ -1,2 +1,9 @@
-﻿  auxfuncs.c
+﻿  metaproc.c
+C:\Users\Light\source\repos\linguina\metaproc.c(6,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\metaproc.c(29,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\metaproc.c(30,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\metaproc.c(71,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\metaproc.c(102,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\metaproc.c(103,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\metaproc.c(117,1): warning C4090: 'initializing': different 'const' qualifiers
   linguina.vcxproj -> C:\Users\Light\source\repos\linguina\Debug\linguina.exe

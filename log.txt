@@ -1,0 +1,2 @@
+LUA DEBUG: this was called on startup
+LUA DEBUG: test
