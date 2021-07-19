@@ -13,6 +13,11 @@ int METAPROC_Index_Scene(lua_State* L) { //basically just allows you to get stuf
 			lua_pushstring(L, tmp_scene->on_exit);
 		else if (!strcmp(member, "examine"))
 			lua_pushstring(L, tmp_scene->examine);
+		else if (!strcmp(member, "locations")) {
+			lua_pushlightuserdata(L, tmp_scene->locations);
+			lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable");
+			lua_setmetatable(L, -2); //turns out _that if we don't do this then we can't index or do anything with [scene_name].locations
+		}
 		else {
 			flogf("LUA EXCEPTION: Attempted to index nonexistant member %s in type 'scene'\n", member);
 			lua_pushnil(L);
@@ -27,16 +32,27 @@ int METAPROC_Index_Scene(lua_State* L) { //basically just allows you to get stuf
 int METAPROC_NewIndex_Scene(lua_State* L) { //basically just allows you to set stuff from the scene struct, no need for c-like prototype here
 	s_scene* tmp_scene = lua_touserdata(L, 1);
 	char* member = luaL_checkstring(L, 2);
-	char* value = luaL_checkstring(L, 3);
 	if (tmp_scene) {
-		if (!strcmp(member, "name"))
+		if (!strcmp(member, "name")) {
+			char* value = luaL_checkstring(L, 3);
 			tmp_scene->name = value;
-		else if (!strcmp(member, "on_enter"))
+		}
+		else if (!strcmp(member, "on_enter")) {
+			char* value = luaL_checkstring(L, 3);
 			tmp_scene->on_enter = value;
-		else if (!strcmp(member, "on_enter"))
+		}
+		else if (!strcmp(member, "on_enter")) {
+			char* value = luaL_checkstring(L, 3);
 			tmp_scene->on_exit = value;
-		else if (!strcmp(member, "examine"))
+		}
+		else if (!strcmp(member, "examine")) {
+			char* value = luaL_checkstring(L, 3);
 			tmp_scene->examine = value;
+		}
+		else if (!strcmp(member, "a")) {
+			s_location* locations = lua_touserdata(L, 3);
+			tmp_scene->locations = locations;
+		}
 		else {
 			flogf("LUA EXCEPTION: Attempted to set nonexistant member %s in type 'scene'\n", member);
 			return 0;
@@ -81,7 +97,10 @@ int METAPROC_Index_LocationMap(lua_State* L) { // location(userdata)* | char* __
 				lua_pushlightuserdata(L, tmp_location->west);
 			else if (!strcmp(member, "east"))
 				lua_pushlightuserdata(L, tmp_location->east);
-			else {
+			else if (!strcmp(member, "locations")) {
+				lua_pushlightuserdata(L, tmp_location); //pretty sure we don't need to set a metatable for this
+			}
+			else{
 				flogf("LUA EXCEPTION: Attempted to access member %s which does not exist in a type 'locationmap'\n", member);
 				lua_pushnil(L);
 				return 1;
@@ -100,13 +119,20 @@ int METAPROC_NewIndex_LocationS(lua_State* L) { // location(userdata)* | char* _
 	s_location* tmp_location = lua_touserdata(L, 1);
 	if (tmp_location) {
 		char* member = luaL_checkstring(L, 2);
-		char* value = luaL_checkstring(L, 3);
-		if (!strcmp(member, "examine"))
+		if (!strcmp(member, "examine")) {
+			char* value = luaL_checkstring(L, 3);
 			tmp_location->examine = value;
-		else if (!strcmp(member, "on_enter"))
+		}
+		else if (!strcmp(member, "on_enter")) {
+			char* value = luaL_checkstring(L, 3);
 			tmp_location->on_enter = value;
-		else
-			flogf("LUA EXCEPTION: Attempted to access invalid member %s\n", member);	
+		}
+		else if (!strcmp(member, "things")) {
+			s_thing* things = lua_touserdata(L, 3);
+			tmp_location->things = things;
+		}
+		else if(strcmp(member, "locations"))
+			flogf("LUA EXCEPTION: Attempted to access invalid member %s in type 'location' or 'locationmap'\n", member);	
 		return 0;
 	}
 	flogf("LUA EXCEPTION: Attempted to index a nil type'\n");
@@ -128,6 +154,8 @@ int METAPROC_Index_Location(lua_State* L) { // char* __indedx(location(userdata)
 			lua_pushlightuserdata(L, tmp_location->west);
 		else if (!strcmp(member, "east"))
 			lua_pushlightuserdata(L, tmp_location->east);
+		else if (!strcmp(member, "location"))
+			lua_pushlightuserdata(L, tmp_location);
 		else {
 			flogf("LUA EXCEPTION: Attempted to access member %s which does not exist in a type 'location'\n", member);
 			lua_pushnil(L);

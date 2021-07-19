@@ -3,7 +3,31 @@
 
 //'start' functions, this function has special access to image, audio, and font loading functions that are not allowed in 'main' and 'textmain'
 //it can also force quit the program if it feels certain conditions are not met by returning false
-
+int LUAPROC_Load_Texture(lua_State* L) { // SDL_Texture(userdata)*, int, int load_texture(char* filename)
+	char* filename = luaL_checkstring(L, 1);
+	SDL_Surface* surf = IMG_Load(filename);
+	if (surf) {
+		SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
+		lua_pushlightuserdata(L, tex);
+		lua_pushnumber(L, surf->w);
+		lua_pushnumber(L, surf->h);
+		SDL_FreeSurface(surf);
+		return 3;
+	}
+	else {
+		flogf("LUA EXCEPTION: Failed to load image file %s\n", filename);
+		lua_pushnil(L);
+		return 1;
+	}
+}
+int LUAPROC_Destroy_Texture(lua_State* L) { // void destory_texture(SDL_Texture(userdata)* tex)
+	SDL_Texture* tex = lua_touserdata(L, 1);
+	if (tex)
+		SDL_DestroyTexture(tex);
+	else
+		flogf("LUA EXCEPTION: Attempted to destroy nil texture");
+	return 0;
+}
 //'main' fuctions, this function has special access to display functions and functions that modify the current backround, audio, and scene related stuff
 //it can also cancel text prasing by returning false, this can be useful if the user wants to have a keyword to quit to menu and doesn't
 //want to engine to process it
@@ -34,18 +58,39 @@ int LUAPROC_Log(lua_State* L) { // void log(char* buffer)
 	return 0;
 }
 //scene functions
-int LUAPROC_Create_Scene(lua_State* L) {// s_scene*(userdata) create_scene(char* name, char* on_enter, char* on_exit, char* examine)
+int LUAPROC_Create_Scene(lua_State* L) {// s_scene*(userdata) create_scene(char* name, char* on_enter, char* on_exit, char* examine, s_location(userdata)* locations)
 	char* name = luaL_checkstring(L, 1); //apparently storing strings like this is bad, seems to be good so far, but should be weary
 	char* on_enter = luaL_checkstring(L, 2);
 	char* on_exit = luaL_checkstring(L, 3);
 	char* examine = luaL_checkstring(L, 4);
+	s_location* locations = lua_touserdata(L, 5);
 	s_scene* tmp_scene = calloc(1, sizeof(*tmp_scene));
-	tmp_scene->name = name, tmp_scene->on_enter = on_enter, tmp_scene->on_exit = on_exit, tmp_scene->examine = examine;
+	tmp_scene->name = name, tmp_scene->on_enter = on_enter, tmp_scene->on_exit = on_exit, tmp_scene->examine = examine, tmp_scene->locations = locations;
 	HASH_ADD_KEYPTR(hh, unloaded_scenes, tmp_scene->name, strlen(tmp_scene->name), tmp_scene);
 	lua_pushlightuserdata(L, tmp_scene);
 	lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
-	lua_setmetatable(L, 5);
+	lua_setmetatable(L, 6);
 	return 1;
+}
+int LUAPROC_Load_Scene(lua_State* L) { // void load_scene(s_scene(userdata)* tmp_scene)
+	s_scene* tmp_scene = lua_touserdata(L, 1);
+	if (tmp_scene) {
+		HASH_DELETE(hh, unloaded_scenes, tmp_scene);
+		HASH_ADD_KEYPTR(hh, scenes, tmp_scene->name, strlen(tmp_scene->name), tmp_scene);
+		return 0;
+	}
+	flogf("LUA EXCEPTION: Attempted to load a nil type scene\n");
+	return 0;
+}
+int LUAPROC_Unload_Scene(lua_State* L) {
+	s_scene* tmp_scene = lua_touserdata(L, 1);
+	if (tmp_scene) {
+		HASH_DELETE(hh, scenes, tmp_scene);
+		HASH_ADD_KEYPTR(hh, unloaded_scenes, tmp_scene->name, strlen(tmp_scene->name), tmp_scene);
+		return 0;
+	}
+	flogf("LUA EXCEPTION: Attempted to unload a nil type scene\n");
+	return 0;
 }
 int LUAPROC_Destroy_Scene(lua_State* L) { // void destroy_scene(s_scene(userdata)* tmp_scene) ***HAS TO BE AN UNLOADED SCENE IN unloaded_scenes ***
 	s_scene* tmp_scene = lua_touserdata(L, 1);
@@ -106,13 +151,28 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 	lua_setmetatable(L, -2);
 	return 1;
 }
-int LUAPROC_Create_Location(lua_State* L) { // location(userdata)* create_location(char* examine, char* on_enter)
+int LUAPROC_Create_Location(lua_State* L) { // location(userdata)* create_location(char* examine, char* on_enter, s_thing* things)
 	char* examine = luaL_checkstring(L, 1);
 	char* on_enter = luaL_checkstring(L, 2);
+	s_thing* things = lua_touserdata(L, 3);
 	s_location* location = calloc(1, sizeof(location));
-	location->examine = examine, location->on_enter = on_enter;
+	location->examine = examine, location->on_enter = on_enter, location->things = things;
 	lua_pushlightuserdata(L, location);
 	lua_getfield(L, LUA_REGISTRYINDEX, "location_metatable");
 	lua_setmetatable(L, -2);
 	return 1;
+}
+int LUAPROC_Destroy_Location(lua_State* L) { // void destroy_location(s_location(userdata)* tmp_location)
+	s_location* tmp_location = lua_touserdata(L, 1);
+	if (tmp_location)
+		free(tmp_location);
+	else
+		flogf("LUA EXCEPTION: Attempted to destroy nil 'location' or 'locationmap'\n");
+	return 0;
+}
+int LUAPROC_Set_Background(lua_State* L) { // void set_background(SDL_Texture(userdata)* tex, bool text_background)
+	SDL_Texture* tex = lua_touserdata(L, 1);
+	text_background = lua_toboolean(L, 2);
+	background = tex;
+	return 0;
 }

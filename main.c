@@ -6,13 +6,15 @@ char input_buf[MAX_INPUT_SIZE];
 
 int resolution_x = 0, resolution_y = 0; lua_State* L = NULL;
 int main_ref = 0, textmain_ref = 0, start_ref = 0;
+int text_background = 0;
 
 SDL_Window* window = NULL; SDL_Renderer* renderer = NULL; 
 SDL_Event even; TTF_Font* strd_font = NULL;
 
 s_renderered_text g_text, g_err_text;
 s_scene* unloaded_scenes = NULL, *scenes = NULL;
-FILE* logfile;
+FILE* logfile; SDL_Texture* background = NULL;
+
 int main(void) {
 	logfile = fopen("log.txt", "w"); //should close automatically on program termination since the os will clean it up
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -63,6 +65,10 @@ int main(void) {
 	//let's run the start function
 	lua_rawgeti(L, LUA_REGISTRYINDEX, start_ref);
 	lua_newtable(L);
+	lua_pushcfunction(L, LUAPROC_Load_Texture);
+	lua_setfield(L, -2, "load_texture");
+	lua_pushcfunction(L, LUAPROC_Destroy_Texture);
+	lua_setfield(L, -2, "destroy_texture");
 	lua_call(L, 1, 2);
 	if (!lua_toboolean(L, -2)) {
 		flogf("ERROR: %s\n", lua_tostring(L, -1));

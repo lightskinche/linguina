@@ -1,2 +1,14 @@
 LUA DEBUG: this was called on startup
 LUA DEBUG: test
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes
+LUA EXCEPTION: Scene test was not found in unloaded_scenes

@@ -30,6 +30,7 @@ extern char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_
 extern char input_buf[MAX_INPUT_SIZE];
 extern int resolution_x, resolution_y;
 extern int main_ref, textmain_ref, start_ref;
+extern int text_background;
 //most important global, lua itself!
 extern lua_State* L;
 //important custom types
@@ -51,6 +52,7 @@ struct s_renderered_text { //this is for rendered text, meaning text that has al
 };
 extern s_renderered_text g_text; 
 extern s_renderered_text g_err_text; //special text that is meant for use with 'textmain' when it denies the user the ability to submit or press enter
+extern SDL_Texture* background;
 //important strucutres
 typedef struct s_scene s_scene;
 typedef struct s_location s_location;
@@ -64,6 +66,7 @@ struct s_scene {
 struct s_location {
 	char* examine, *on_enter;  //locations don't have names, they have descriptions and things within them
 	s_location* north, *south, *west, *east;
+	s_thing* things;
 };
 struct s_thing {
 	char* name, *examine;
@@ -74,15 +77,22 @@ extern inline void AUX_Load_Libraries(void);
 extern void AUX_Handle_GameLoop(void);
 extern void flogf(char* format, ...); //special function that writes to stdout and to log.txt
 //lua functions
+extern int LUAPROC_Load_Texture(lua_State* L);
+extern int LUAPROC_Destroy_Texture(lua_State* L);
+extern int LUAPROC_Set_Background(lua_State* L);
+
 extern int LUAPROC_Display(lua_State* L);
 extern int LUAPROC_Log(lua_State* L);
 
 extern int LUAPROC_Create_Scene(lua_State* L);
+extern int LUAPROC_Load_Scene(lua_State* L);
+extern int LUAPROC_Unload_Scene(lua_State* L);
 extern int LUAPROC_Destroy_Scene(lua_State* L);
 extern int LUAPROC_Find_Scene_Unloaded(lua_State* L);
 
 extern int LUAPROC_Create_LocationMap(lua_State* L);
 extern int LUAPROC_Create_Location(lua_State* L);
+extern int LUAPROC_Destroy_Location(lua_State* L);
 //metamethods
 extern int METAPROC_Index_Scene(lua_State* L);
 extern int METAPROC_NewIndex_Scene(lua_State* L);

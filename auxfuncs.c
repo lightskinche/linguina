@@ -40,6 +40,12 @@ inline void AUX_Load_Libraries(void) {
 	lua_pushcfunction(L, LUAPROC_Destroy_Scene);
 	lua_setglobal(L, "destroy_scene");
 
+	lua_pushcfunction(L, LUAPROC_Load_Scene);
+	lua_setglobal(L, "load_scene");
+
+	lua_pushcfunction(L, LUAPROC_Unload_Scene);
+	lua_setglobal(L, "unload_scene");
+
 	lua_pushcfunction(L, LUAPROC_Find_Scene_Unloaded);
 	lua_setglobal(L, "find_scene_u");
 
@@ -48,6 +54,9 @@ inline void AUX_Load_Libraries(void) {
 
 	lua_pushcfunction(L, LUAPROC_Create_Location);
 	lua_setglobal(L, "create_location");
+
+	lua_pushcfunction(L, LUAPROC_Destroy_Location);
+	lua_setglobal(L, "destroy_location");
 }
 
 void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' function and moves the text-based game forward
@@ -57,6 +66,7 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 		while (SDL_PollEvent(&even)) {
 			if (even.type == SDL_KEYDOWN) {
 				for (int i = 0; i < MAX_INPUT_SIZE - 1; ++i) {
+					input_buf[MAX_INPUT_SIZE - 2] = 0;
 					if (!input_buf[i]) {
 						//handle special keys
 						if (even.key.keysym.sym == SDLK_LSHIFT)
@@ -75,7 +85,6 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 								input_buf[i - 1] = 0;
 						break;
 					}
-					input_buf[MAX_INPUT_SIZE - 2] = 0;
 				}
 			}
 			else if (even.type == SDL_KEYUP) {
@@ -116,19 +125,27 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 			}
 		}
 		SDL_RenderClear(renderer);
+		if (background)
+			SDL_RenderCopy(renderer, background, NULL, NULL);
+		//render background, if any
 		{
 			SDL_Surface* tmp_surf = TTF_RenderText_Blended_Wrapped(strd_font, input_buf, (SDL_Color) { 255, 255, 255 }, resolution_x);
 			SDL_Texture* tmp_text = SDL_CreateTextureFromSurface(renderer, tmp_surf);
-			if (tmp_surf)
+			if (tmp_surf) {
+				if (text_background)
+					SDL_RenderFillRect(renderer, &(SDL_Rect){0, 50, resolution_x, tmp_surf->h});
 				SDL_RenderCopy(renderer, tmp_text, NULL, &(SDL_Rect){0, 50, tmp_surf->w, tmp_surf->h});
+			}
 			SDL_DestroyTexture(tmp_text);
 			SDL_FreeSurface(tmp_surf);
 		}
 		//draw error text, if any
-		if(g_err_text.text)
+		if (g_err_text.text)
 			SDL_RenderCopy(renderer, g_err_text.text, NULL, &(SDL_Rect){0, 100, g_err_text.w, g_err_text.h});
 		//draw response text at the bottom
-		SDL_RenderCopy(renderer, g_text.text, NULL, &(SDL_Rect){0, resolution_y - g_text.h, g_text.w, g_text.h});
+		if(text_background)
+			SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
+		SDL_RenderCopy(renderer, g_text.text, NULL, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
 		SDL_RenderPresent(renderer);
 		lua_settop(L, 0); //get everything off the stack
 	}
@@ -136,13 +153,19 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 		//make sure we empty the last g_text
 		if (g_text.text)
 			SDL_DestroyTexture(g_text.text);
+		g_text.w = 0, g_text.h = 0;
 		//prase input and seperate into tokens
 		//run the 'main' function before we do any processing
 		lua_rawgeti(L, LUA_REGISTRYINDEX, main_ref);
 		//now set up the 'state' table, this table will contain the current data about the program and functions that can be used in main
 		lua_newtable(L);
 		lua_pushcfunction(L, LUAPROC_Display);
-		lua_setfield(L, 2, "display");
+		lua_setfield(L, -2, "display");
+		lua_pushcfunction(L, LUAPROC_Set_Background);
+		lua_setfield(L, -2, "set_background");
+		lua_pushcfunction(L, LUAPROC_Destroy_Texture);
+		lua_setfield(L, -2, "destroy_texture"); //main is allowed to destroy materials once they are no longer needed, but it cannot load them
+		
 		char input_buf_c[MAX_INPUT_SIZE]; memcpy(input_buf_c, input_buf, strlen(input_buf) + 1);
 		//do this so we don't end up modifyig the actual input_buf since we still need it
 		char* token = strtok(input_buf_c, " "); int num_arg = 1;
@@ -155,6 +178,29 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 		lua_call(L, 1 + num_arg, 1);
 		if (!lua_toboolean(L, -1))
 			goto QUIT;
+		//process tokens
+
+		//special render function so the text just doesn't appear, shouldn't decrease perfomance at all and should be togglable
+		for (float j = 0; j < g_text.w; j += 0.5) {
+			SDL_RenderClear(renderer);
+			if (background) {
+				SDL_RenderCopy(renderer, background, NULL, NULL);
+				if(text_background)
+					SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
+			}
+			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, j, 25}, & (SDL_Rect){0, resolution_y - g_text.h - 25, j, 25});
+			SDL_RenderPresent(renderer);
+		}
+		for (float i = 25; i < g_text.h; i += 0.25) {
+			SDL_RenderClear(renderer);
+			if (background) {
+				SDL_RenderCopy(renderer, background, NULL, NULL);
+				if (text_background)
+					SDL_RenderFillRect(renderer, &(SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, g_text.h});
+			}
+			SDL_RenderCopy(renderer, g_text.text, &(SDL_Rect){0, 0, g_text.w, i}, & (SDL_Rect){0, resolution_y - g_text.h - 25, g_text.w, i});
+			SDL_RenderPresent(renderer);
+		}
 		QUIT:
 		memset(input_buf, 0, MAX_INPUT_SIZE); //reset input_buf
 		lua_settop(L, 0);
