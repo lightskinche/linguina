@@ -129,7 +129,7 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 			lua_rawgeti(L, 3 + j + (i * width), 2);
 			char* examine = lua_tostring(L, -2);
 			char* on_enter = lua_tostring(L, -1);
-			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter;
+			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter, locations[j + (i * width)].map = 1;
 			if (i > 0)
 				if(locations[j + ((i - 1) * width)].examine)
 					locations[j + (i * width)].north = &locations[j + ((i - 1) * width)];

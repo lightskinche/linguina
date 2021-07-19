@@ -15,7 +15,10 @@ int METAPROC_Index_Scene(lua_State* L) { //basically just allows you to get stuf
 			lua_pushstring(L, tmp_scene->examine);
 		else if (!strcmp(member, "locations")) {
 			lua_pushlightuserdata(L, tmp_scene->locations);
-			lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable");
+			if (tmp_scene->locations->map) //now we are able to tell if we were given a locationmap or a location since that is pretty important
+				lua_getfield(L, LUA_REGISTRYINDEX, "locationmap_metatable"); 
+			else
+				lua_getfield(L, LUA_REGISTRYINDEX, "location_metatable");
 			lua_setmetatable(L, -2); //turns out _that if we don't do this then we can't index or do anything with [scene_name].locations
 		}
 		else {

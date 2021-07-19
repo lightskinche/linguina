@@ -6,7 +6,7 @@ function start(state)
    locmap[2].examine = "test"
    log(locmap[2].examine)
    --dont know why this was so hard to get right
-   test = create_scene("test","walk","leave","examine", locmap)
+   test = create_scene("test","walk","leave","examine", locmap[2])
    print(test.locations[2])
    texture = state.load_texture("resources/test.png")
    texture2 = state.load_texture("resources/test2.png")

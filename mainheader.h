@@ -66,6 +66,7 @@ struct s_scene {
 struct s_location {
 	char* examine, *on_enter;  //locations don't have names, they have descriptions and things within them
 	s_location* north, *south, *west, *east;
+	int map;
 	s_thing* things;
 };
 struct s_thing {
