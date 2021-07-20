@@ -1,0 +1,1 @@
+LUA EXCEPTION: Scene 'test' did not have a location map

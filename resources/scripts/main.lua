@@ -1,3 +1,21 @@
+--callbacks
+function callback_workpls(dir)
+engine.set_background(roblox_t,nil)
+engine.display("You came from the " .. dir)
+end
+function callback_2(dir)
+if dir == "south" then
+engine.set_background(nil,nil)
+else
+engine.set_background(roblox_t,true)
+end
+end
+function callback_3(dir)
+if dir == "north" then
+engine.display("That way is dangerous traveler!")
+end
+end
+
 --this function runs on startup
 function start()
    roblox_t = engine.load_texture("resources/test.png")
@@ -9,12 +27,12 @@ function start()
    nullzone:load()
    --perfect, this is exactly how I want the locationmap function to look and work
    testlocations = engine.create_locationmap(3,3,2,2,
-   {"bigtest","workpls"},{"cool spot","asf"},{"ssss","vbsbsb"},
-   {"bigtesta","workplsa"},{"cool spota","asf"},{"ssssa","vbsbsb"},
-   {"bigtestb","workplsb"},{"cool spotb","asf"},{"ssssb","vbsbsb"})
+   {"bigtest","workpls", callback_workpls, callback_2, callback_3},{"cool spot","asf", nil, nil, nil},{"ssss","vbsbsb", nil, nil, nil},
+   {"bigtesta","workplsa", nil, nil, nil},{"cool spota","asf", nil, nil, nil},{"ssssa","vbsbsb", nil, nil, nil},
+   {"bigtestb","workplsb", nil, nil, nil},{"cool spotb","asf", nil, nil, nil},{"ssssb","vbsbsb", nil, nil, nil})
    nullzone:set("locations",testlocations)
-   print(nullzone:get("locationmap"))
-   engine.destroy_locationmap(testlocations)
+  -- print(nullzone:get("locationmap"))
+   --engine.destroy_locationmap(testlocations)
    engine.set_currentscene(test)
    engine.set_background(roblox_t,nil)
    return true

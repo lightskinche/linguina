@@ -1,21 +1,4 @@
-﻿  auxfuncs.c
-C:\Users\Light\source\repos\linguina\auxfuncs.c(134,39): warning C4047: '=': 'char **' differs in levels of indirection from 'char *'
-C:\Users\Light\source\repos\linguina\auxfuncs.c(135,30): warning C4047: 'function': 'const char *' differs in levels of indirection from 'char **'
-C:\Users\Light\source\repos\linguina\auxfuncs.c(135,27): warning C4024: 'lua_pushstring': different types for formal and actual parameter 2
-C:\Users\Light\source\repos\linguina\auxfuncs.c(137,33): warning C4047: '=': 'char **' differs in levels of indirection from 'char *'
-C:\Users\Light\source\repos\linguina\auxfuncs.c(138,31): warning C4047: 'function': 'const char *' differs in levels of indirection from 'char **'
-C:\Users\Light\source\repos\linguina\auxfuncs.c(138,28): warning C4024: 'lua_pushstring': different types for formal and actual parameter 2
-C:\Users\Light\source\repos\linguina\auxfuncs.c(149,25): warning C4047: 'function': 'const char *' differs in levels of indirection from 'char **'
-C:\Users\Light\source\repos\linguina\auxfuncs.c(149,22): warning C4024: 'strcmp': different types for formal and actual parameter 1
-C:\Users\Light\source\repos\linguina\auxfuncs.c(151,5): warning C4047: 'function': 'const char *' differs in levels of indirection from 'char **'
-C:\Users\Light\source\repos\linguina\auxfuncs.c(151,5): warning C4024: 'strlen': different types for formal and actual parameter 1
-C:\Users\Light\source\repos\linguina\auxfuncs.c(220,65): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\auxfuncs.c(220,119): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\auxfuncs.c(222,71): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\auxfuncs.c(222,131): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\auxfuncs.c(233,71): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\auxfuncs.c(233,131): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-  luaprocs.c
+﻿  luaprocs.c
 C:\Users\Light\source\repos\linguina\luaprocs.c(7,1): warning C4090: 'initializing': different 'const' qualifiers
 C:\Users\Light\source\repos\linguina\luaprocs.c(37,1): warning C4090: 'initializing': different 'const' qualifiers
 C:\Users\Light\source\repos\linguina\luaprocs.c(56,1): warning C4090: 'initializing': different 'const' qualifiers
@@ -27,18 +10,7 @@ C:\Users\Light\source\repos\linguina\luaprocs.c(76,1): warning C4244: 'initializ
 C:\Users\Light\source\repos\linguina\luaprocs.c(77,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
 C:\Users\Light\source\repos\linguina\luaprocs.c(78,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
 C:\Users\Light\source\repos\linguina\luaprocs.c(79,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\luaprocs.c(85,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(86,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(127,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
-  main.c
-C:\Users\Light\source\repos\linguina\main.c(18,16): warning C4026: function declared with formal parameter list
-C:\Users\Light\source\repos\linguina\main.c(22,39): warning C4090: '=': different 'const' qualifiers
-  metaprocs.c
-C:\Users\Light\source\repos\linguina\metaprocs.c(28,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\metaprocs.c(52,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\metaprocs.c(55,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\metaprocs.c(59,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\metaprocs.c(63,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\metaprocs.c(67,1): warning C4090: 'initializing': different 'const' qualifiers
-  Generating Code...
+C:\Users\Light\source\repos\linguina\luaprocs.c(91,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(92,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(136,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
   linguina.vcxproj -> C:\Users\Light\source\repos\linguina\Debug\linguina.exe

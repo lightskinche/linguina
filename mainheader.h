@@ -68,6 +68,7 @@ struct s_scene {
 };
 struct s_location {
 	char* examine, *on_enter;  //locations don't have names, they have descriptions and things within them
+	int callback_enter, callback_exit, callback_invalid; //invalid callback is when player tries to go out of bounds, this can be used to switch scenes or something
 	s_location* north, *south, *west, *east;
 	s_location* orginal_map;
 	s_thing* things;

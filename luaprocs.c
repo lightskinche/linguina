@@ -82,22 +82,31 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 		for (int j = 0; j < width; ++j) {
 			lua_rawgeti(L, 5 + j + (i * width), 1);
 			lua_rawgeti(L, 5 + j + (i * width), 2);
-			char* examine = lua_tostring(L, -2);
+			lua_rawgeti(L, 5 + j + (i * width), 3);
+			lua_rawgeti(L, 5 + j + (i * width), 4);
+			lua_rawgeti(L, 5 + j + (i * width), 5);
+			locations[j + (i * width)].callback_invalid = luaL_ref(L, LUA_REGISTRYINDEX); //store the callback, if any
+			locations[j + (i * width)].callback_exit = luaL_ref(L, LUA_REGISTRYINDEX); //store the callback, if any
+			locations[j + (i * width)].callback_enter = luaL_ref(L, LUA_REGISTRYINDEX); //store the callback, if any
 			char* on_enter = lua_tostring(L, -1);
+			char* examine = lua_tostring(L, -2);
 			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter, locations[j + (i * width)].orginal_map = locations;
-			if (i > 0)
-				if(locations[j + ((i - 1) * width)].examine)
-					locations[j + (i * width)].north = &locations[j + ((i - 1) * width)];
-			if (i < height - 1)
-				if(locations[j + ((i + 1) * width)].examine)
-					locations[j + (i * width)].south = &locations[j + ((i + 1) * width)];
-			if (j > 0)
-				if(locations[(j - 1) + (i * width)].examine)
-					locations[j + (i * width)].west = &locations[(j - 1) + (i * width)];
-			if (j < width - 1)
-				if(locations[(j + 1) + (i * width)].examine)
-					locations[j + (i * width)].east = &locations[(j + 1) + (i * width)];
-			//printf("Location at [x:%d y:%d] is address %p and has north %p, south %p, east %p, and west %p\n", 
+		}
+	}
+	for (int i = 0; i < height; ++i) {
+		for (int j = 0; j < width; ++j) {
+			if (i > 0 && locations[j + ((i - 1) * width)].examine)
+				locations[j + (i * width)].north = &locations[j + ((i - 1) * width)];
+			if (i < height - 1 && locations[j + ((i + 1) * width)].examine)
+				locations[j + (i * width)].south = &locations[j + ((i + 1) * width)];
+
+			if (j > 0 && locations[(j - 1) + (i * width)].examine)
+				locations[j + (i * width)].west = &locations[(j - 1) + (i * width)]; //this is east and west thing is lowkey confusing me
+
+			if(j < width - 1 && locations[(j + 1) + (i * width)].examine)
+				locations[j + (i * width)].east = &locations[(j + 1) + (i * width)];
+
+			//printf("Location at [x:%d y:%d] is address %p and has north %p, south %p, east %p, and west %p\n",
 				//j, i, &locations[j + (i * width)], locations[j + (i * width)].north, locations[j + (i * width)].south, locations[j + (i * width)].west, locations[j + (i * width)].east);
 		}
 	}

@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="auxfuncs.c" />
+    <ClCompile Include="gameloop.c" />
     <ClCompile Include="luaprocs.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="metaprocs.c" />
