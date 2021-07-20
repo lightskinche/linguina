@@ -18,6 +18,10 @@ end
 
 --this function runs on startup
 function start()
+   --need to test this further to see if the file is at fault or if I messed up somewhere
+   --audiotest = engine.load_music("resources/audio.wav")
+   --the old audio file is deleted, find a new audio file to test
+   --audiotest:play()
    roblox_t = engine.load_texture("resources/test.png")
    test = engine.create_scene("test","I walked into the testing area, it was nice.","I left.","examine", nil)
    test:set("callback_enter", function(scene)engine.set_background(roblox_t,nil)end)
@@ -30,7 +34,7 @@ function start()
    {"bigtest","workpls", callback_workpls, callback_2, callback_3},{"cool spot","asf", nil, nil, nil},{"ssss","vbsbsb", nil, nil, nil},
    {"bigtesta","workplsa", nil, nil, nil},{"cool spota","asf", nil, nil, nil},{"ssssa","vbsbsb", nil, nil, nil},
    {"bigtestb","workplsb", nil, nil, nil},{"cool spotb","asf", nil, nil, nil},{"ssssb","vbsbsb", nil, nil, nil})
-   nullzone:set("locations",testlocations)
+   nullzone:set("locations",testlocations) --I want the user to be able to edit locations, maybe add getter and setters?
   -- print(nullzone:get("locationmap"))
    --engine.destroy_locationmap(testlocations)
    engine.set_currentscene(test)

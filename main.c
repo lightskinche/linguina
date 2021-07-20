@@ -2,7 +2,7 @@
 //define some externs
 char main_symbol[MAX_BUFFER_SIZE], textmain_symbol[MAX_BUFFER_SIZE], start_symbol[MAX_BUFFER_SIZE];
 char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
-char input_buf[MAX_INPUT_SIZE];
+char input_buf[MAX_INPUT_SIZE], * e_typenames[MAX_ETYPES] = { "T_NIL","T_TEXTURE","T_AUDIO","T_MUSIC","T_SCENE","T_LOCATION" }; //for easy e_type to str conversion
 
 int resolution_x = 0, resolution_y = 0; lua_State* L = NULL;
 int main_ref = 0, textmain_ref = 0, start_ref = 0;
@@ -19,6 +19,8 @@ int main(void) {
 	logfile = fopen("log.txt", "w"); //should close automatically on program termination; there is no point throwing fclose(logfile) everywhere
 	SDL_Init(SDL_INIT_EVERYTHING);
 	TTF_Init();
+	Mix_Init(MIX_INIT_MP3);
+	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, MAX_MIXER_CHANNELS, 2048); //open mixer
 	keyboard = SDL_GetKeyboardState(NULL); //do this early because why not
 	//open engine.config
 	{

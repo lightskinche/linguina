@@ -1,1 +1,1 @@
-LUA EXCEPTION: Scene 'test' did not have a location map
+LUA EXCEPTION: Failed to load resources/audio.wav (music audio file), MIXER: Unknown WAVE data format

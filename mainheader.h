@@ -20,6 +20,8 @@
 #define MAX_BUFFER_SIZE 512 //512 is an all-around good amount for most char arrays
 #define MAX_INPUT_SIZE 64
 #define MAX_TOKENS 4
+#define MAX_ETYPES 7
+#define MAX_MIXER_CHANNELS 8
 //important globals
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
@@ -29,7 +31,7 @@ extern FILE* logfile;
 extern Uint8* keyboard; //just in case we need quick keyboard input
 extern char entry_symbol[MAX_BUFFER_SIZE], textmain_symbol[MAX_BUFFER_SIZE], start_symbol[MAX_BUFFER_SIZE];
 extern char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
-extern char input_buf[MAX_INPUT_SIZE];
+extern char input_buf[MAX_INPUT_SIZE], *e_typenames[MAX_ETYPES];
 extern int resolution_x, resolution_y;
 extern int main_ref, textmain_ref, start_ref;
 extern int text_background;
@@ -37,14 +39,20 @@ extern int text_background;
 extern lua_State* L;
 //important custom types
 typedef enum e_types e_types;
+typedef struct s_data s_data;
 
 enum e_types {
-	T_UNKNOWN = -1, //this type is unknown and should be discarded
-	T_NULL = 0, //different from T_UNKNOWN as we know this type is 'garabage'
-	T_SURFACE = 1, //this is an image that is loaded in ram
-	T_TEXTURE = 2, //this is an image that is loaded on VRAM
-	T_AUDIO = 3, //this is an audio stream that is loaded in ram
-	T_FONT = 4 //self-explainatory, this is a font
+	T_UNKNOWN = -1, //this type will probably never be used but just in case
+	T_NIL = 0, //different from T_UNKNOWN as we know this type is 'garabage'
+	T_TEXTURE = 1, //this is an image that is loaded on VRAM
+	T_AUDIO = 2, //this is an audio stream that is loaded in ram
+	T_MUSIC = 3,
+	T_SCENE = 4,
+	T_LOCATION = 5
+};
+struct s_data {
+	void* data;
+	e_types type;
 };
 typedef struct s_renderered_text s_renderered_text;
 
@@ -63,7 +71,7 @@ typedef struct s_thing s_thing;
 struct s_scene {
 	char* name, *on_enter, *on_exit, *examine;
 	int callback_enter, callback_exit, callback_examine;
-	s_location* locations;
+	s_data* locations; //this s_data thing is annoying but we're doing it for safety
 	UT_hash_handle hh;
 };
 struct s_location {
@@ -85,9 +93,11 @@ extern void AUX_Display(char* buffer); //display something at the bottom of the 
 extern void flogf(char* format, ...); //special function that writes to stdout and to log.txt
 //lua functions
 extern int LUAPROC_Load_Texture(lua_State* L);
-extern int LUAPROC_Destroy_Texture(lua_State* L);
-extern int LUAPROC_Set_Background(lua_State* L);
 
+extern int LUAPROC_Load_Audio(lua_State* L);
+extern int LUAPROC_Load_Music(lua_State* L);
+
+extern int LUAPROC_Set_Background(lua_State* L);
 extern int LUAPROC_Display(lua_State* L);
 extern int LUAPROC_Log(lua_State* L);
 
@@ -104,3 +114,13 @@ extern int METAPROC_Unload_Scene(lua_State* L);
 extern int METAPROC_Gc_Scene(lua_State* L);
 extern int METAPROC_Getter_Scene(lua_State* L);
 extern int METAPROC_Setter_Scene(lua_State* L);
+
+extern int METAPROC_Gc_Audio(lua_State* L);
+extern int METAPROC_Gc_Music(lua_State* L);
+
+extern int METAPROC_Play_Audio(lua_State* L);
+extern int METAPROC_Stop_Audio(lua_State* L);
+extern int METAPROC_Play_Music(lua_State* L);
+extern int METAPROC_Stop_Music(lua_State* L);
+
+extern int METAPROC_Gc_Texture(lua_State* L);

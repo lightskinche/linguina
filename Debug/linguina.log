@@ -1,16 +1,19 @@
 ﻿  luaprocs.c
-C:\Users\Light\source\repos\linguina\luaprocs.c(7,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(5,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(25,1): warning C4090: 'initializing': different 'const' qualifiers
 C:\Users\Light\source\repos\linguina\luaprocs.c(37,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(56,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(62,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(63,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(64,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(65,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(76,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\luaprocs.c(77,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\luaprocs.c(78,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\luaprocs.c(79,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
-C:\Users\Light\source\repos\linguina\luaprocs.c(91,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(92,1): warning C4090: 'initializing': different 'const' qualifiers
-C:\Users\Light\source\repos\linguina\luaprocs.c(136,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
+C:\Users\Light\source\repos\linguina\luaprocs.c(51,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(66,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(81,150): warning C4133: '=': incompatible types - from 's_location *' to 's_data *'
+C:\Users\Light\source\repos\linguina\luaprocs.c(72,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(73,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(74,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(75,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(88,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
+C:\Users\Light\source\repos\linguina\luaprocs.c(89,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
+C:\Users\Light\source\repos\linguina\luaprocs.c(90,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
+C:\Users\Light\source\repos\linguina\luaprocs.c(91,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
+C:\Users\Light\source\repos\linguina\luaprocs.c(103,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(104,1): warning C4090: 'initializing': different 'const' qualifiers
+C:\Users\Light\source\repos\linguina\luaprocs.c(162,1): warning C4244: 'initializing': conversion from 'lua_Number' to 'int', possible loss of data
   linguina.vcxproj -> C:\Users\Light\source\repos\linguina\Debug\linguina.exe

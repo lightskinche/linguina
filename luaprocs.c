@@ -1,14 +1,15 @@
 #include "mainheader.h"
 //these functions are the 'library' for the client's scripts
-
-//'start' functions, this function has special access to image, audio, and font loading functions that are not allowed in 'main' and 'textmain'
-//it can also force quit the program if it feels certain conditions are not met by returning false
+//resource aqusisition functions
 int LUAPROC_Load_Texture(lua_State* L) { // SDL_Texture(userdata)*, int, int load_texture(char* filename)
 	char* filename = luaL_checkstring(L, 1);
 	SDL_Surface* surf = IMG_Load(filename);
 	if (surf) {
 		SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
-		lua_pushlightuserdata(L, tex);
+		s_data* udata = lua_newuserdata(L, sizeof(*udata));
+		udata->data = tex, udata->type = T_TEXTURE; //we will use this structure for valididation
+		lua_getfield(L, LUA_REGISTRYINDEX, "texture_metatable");
+		lua_setmetatable(L, -2);
 		lua_pushnumber(L, surf->w);
 		lua_pushnumber(L, surf->h);
 		SDL_FreeSurface(surf);
@@ -20,17 +21,31 @@ int LUAPROC_Load_Texture(lua_State* L) { // SDL_Texture(userdata)*, int, int loa
 		return 1;
 	}
 }
-int LUAPROC_Destroy_Texture(lua_State* L) { // void destory_texture(SDL_Texture(userdata)* tex)
-	SDL_Texture* tex = lua_touserdata(L, 1);
-	if (tex)
-		SDL_DestroyTexture(tex);
-	else
-		flogf("LUA EXCEPTION: Attempted to destroy nil texture");
-	return 0;
+//TODO: test audio because idk if it is broken or not, but beside that everything is looking good
+int LUAPROC_Load_Audio(lua_State* L) { // Mix_Chunk(userdata)* load_audio(char* filename)
+	char* filename = luaL_checkstring(L, 1);
+	s_data* udata = lua_newuserdata(L, sizeof(*udata));
+	udata->data = Mix_LoadWAV(filename), udata->type = T_AUDIO;
+	lua_getfield(L, LUA_REGISTRYINDEX, "audio_metatable");
+	lua_setmetatable(L, -2);
+	if(!udata->data){
+		flogf("LUA EXCEPTION: Failed to load %s (audio file), MIXER: %s\n", filename, Mix_GetError());
+		lua_pushnil(L);
+	}
+	return 1;
 }
-//'main' fuctions, this function has special access to display functions and functions that modify the current backround, audio, and scene related stuff
-//it can also cancel text prasing by returning false, this can be useful if the user wants to have a keyword to quit to menu and doesn't
-//want to engine to process it
+int LUAPROC_Load_Music(lua_State* L) {
+	char* filename = luaL_checkstring(L, 1); //Mix_Music(userdata)* load_music(char* filename)
+	s_data* udata = lua_newuserdata(L, sizeof(*udata));
+	udata->data = Mix_LoadMUS(filename), udata->type = T_MUSIC;
+	lua_getfield(L, LUA_REGISTRYINDEX, "music_metatable");
+	lua_setmetatable(L, -2);
+	if (!udata->data){
+		flogf("LUA EXCEPTION: Failed to load %s (music audio file), MIXER: %s\n", filename, Mix_GetError());
+		lua_pushnil(L);
+	}
+	return 1;
+}
 int LUAPROC_Display(lua_State* L) { // void display(char* buf)
 	if (g_text.text)
 		SDL_DestroyTexture(g_text.text); //remove current texture from g_text if it is there
@@ -48,10 +63,6 @@ int LUAPROC_Display(lua_State* L) { // void display(char* buf)
 		return 0;
 	}
 }
-// 'textmain' functions, this function has the special abilty to deny the user the ability to submit input along with a reason,
-//besides that it can perform realtime anlysis of input_buf and can basically runs everyframe
-
-//these functions can be accessed anywhere
 int LUAPROC_Log(lua_State* L) { // void log(char* buffer)
 	char* buffer = luaL_checkstring(L, 1);
 	flogf("LUA DEBUG: %s\n", buffer);
@@ -64,7 +75,9 @@ int LUAPROC_Create_Scene(lua_State* L) {// s_scene*(userdata) create_scene(char*
 	char* on_exit = luaL_checkstring(L, 3);
 	char* examine = luaL_checkstring(L, 4);
 	s_location* locations = lua_touserdata(L, 5);
-	s_scene* tmp_scene = lua_newuserdata(L, sizeof(*tmp_scene));
+	s_data* udata = lua_newuserdata(L, sizeof(*udata));
+	s_scene* tmp_scene = calloc(1, sizeof(*tmp_scene));
+	udata->data = tmp_scene, udata->type = T_SCENE;
 	tmp_scene->callback_enter = 0, tmp_scene->callback_exit = 0, tmp_scene->callback_examine = 0; //makes sure no garbage is in there
 	tmp_scene->name = name, tmp_scene->on_enter = on_enter, tmp_scene->on_exit = on_exit, tmp_scene->examine = examine, tmp_scene->locations = locations;
 	lua_getfield(L, LUA_REGISTRYINDEX, "scene_metatable");
@@ -110,26 +123,40 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 				//j, i, &locations[j + (i * width)], locations[j + (i * width)].north, locations[j + (i * width)].south, locations[j + (i * width)].west, locations[j + (i * width)].east);
 		}
 	}
+	s_data* udata = calloc(1, sizeof(*udata));
+	udata->type = T_LOCATION;
 	if(offsetx > 0 && offsety > 0)
-		lua_pushlightuserdata(L, &locations[offsetx - 1 + ((offsety - 1) * width)]); //return this map of locations
+		udata->data = &locations[offsetx - 1 + ((offsety - 1) * width)]; //return this map of locations
 	else {
 		flogf("LUA EXCEPTION: Invalid index to location map, subscript must be greater than 0\n");
-		lua_pushlightuserdata(L, locations);
+		udata->data = locations;
 	}
+	lua_pushlightuserdata(L, udata);
 	return 1;
 }
 int LUAPROC_Destroy_Location(lua_State* L) { // void destroy_location(s_location(userdata)* tmp_location)
-	s_location* tmp_location = lua_touserdata(L, 1);
-	if (tmp_location)
-		free(tmp_location->orginal_map);
+	s_data* udata = lua_touserdata(L, 1);
+	if (udata && udata->type == T_LOCATION) {
+		if (udata->data)
+			free(udata->data);
+		else
+			flogf("LUA EXCEPTION: Attempted to destroy nil 'location' or 'locationmap'\n");
+	}
+	else if (udata)
+		flogf("LUA EXCPETION: Invalid type passed to 'destroy_location,' expected 'T_LOCATION' but recieved '%s'\n", e_typenames[udata->type]);
 	else
-		flogf("LUA EXCEPTION: Attempted to destroy nil 'location' or 'locationmap'\n");
+		flogf("LUA EXCPETION: Invalid type, NIL, passed to 'destroy_location'\n");
 	return 0;
 }
 int LUAPROC_Set_Background(lua_State* L) { // void set_background(SDL_Texture(userdata)* tex, bool text_background)
-	SDL_Texture* tex = lua_touserdata(L, 1);
+	s_data* udata = lua_touserdata(L, 1);
 	text_background = lua_toboolean(L, 2);
-	background = tex;
+	if (udata && udata->type == T_TEXTURE)
+		background = udata->data;
+	else if (udata)
+		flogf("LUA EXPCETION: Invalid type passed to 'set_background,' expected 'T_TEXTURE' but recieved '%s'\n", e_typenames[udata->type]);
+	else
+		background = NULL;
 	return 0;
 }
 int LUAPROC_Wait(lua_State* L) { //void wait(int ms)
@@ -138,10 +165,12 @@ int LUAPROC_Wait(lua_State* L) { //void wait(int ms)
 	return 0;
 }
 int LUAPROC_Set_CurrentScene(lua_State* L) { //void set_currentscene(s_scene(userdata)* tmp_scene)
-	s_scene* tmp_scene = lua_touserdata(L, 1);
-	if (tmp_scene)
-		cur_scene = tmp_scene;
+	s_data* udata = lua_touserdata(L, 1);
+	if (udata && udata->type == T_SCENE)
+		cur_scene = udata->data;
+	else if (udata)
+		flogf("LUA EXCEPTION: Invalid type passed to 'set_currentscene,' expected T_SCENE but recieved '%s'\n", e_typenames[udata->type]);
 	else
-		flogf("LUA EXCEPTION: Attempted to set current scene to a nil value\n");
+		flogf("LUA EXPCETION: Inavlid type, NIL, passed to 'set_currentscene'\n");
 	return 0;
 }

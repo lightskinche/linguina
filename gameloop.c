@@ -116,26 +116,28 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 			//switch the current scene in specific situations like: 'I walked west and now I see a store' because then saying 'go store' makes more sense
 			//however, this use of 'go' can be circumvented completly by just only having one scene loaded at a time and silently swiching scenes
 			if (!strcmp(tokens[0], "go") && tokens[1]) {
-				if (cur_scene && cur_scene->locations) {
+				if (cur_scene && cur_scene->locations && cur_scene->locations->data) {
+					s_location* tmp_location = cur_scene->locations->data;
 					if (!strcmp(tokens[1], "north")) {
-						if (cur_scene->locations->north) {
-							if (cur_scene->locations->callback_exit > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_exit);
+						if (tmp_location->north) {
+							if (tmp_location->callback_exit > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_exit);
 								lua_pushstring(L, "north"); //push direction the player is leaving in
 								lua_call(L, 1, 0);
 							}
-							cur_scene->locations = cur_scene->locations->north;
-							AUX_Display(cur_scene->locations->on_enter);
-							if (cur_scene->locations->callback_enter > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_enter);
+							cur_scene->locations->data = tmp_location->north;
+							tmp_location = cur_scene->locations->data;
+							AUX_Display(tmp_location->on_enter);
+							if (tmp_location->callback_enter > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_enter);
 								lua_pushstring(L, "north"); //lets the client know what direction the player typed to come here relative to the last location
 								lua_call(L, 1, 0);
 							}
 						}
 						else {
 							AUX_Display("There isn't anything north of here.");
-							if (cur_scene->locations->callback_invalid > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_invalid);
+							if (tmp_location->callback_invalid > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_invalid);
 								lua_pushstring(L, "north"); //let them know the direction the player tried to go in
 								lua_call(L, 1, 0);
 							}
@@ -144,24 +146,25 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 						goto QUIT;
 					}
 					else if (!strcmp(tokens[1], "south")) {
-						if (cur_scene->locations->south) {
-							if (cur_scene->locations->callback_exit > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_exit);
+						if (tmp_location->south) {
+							if (tmp_location->callback_exit > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_exit);
 								lua_pushstring(L, "south"); //push direction the player is leaving in
 								lua_call(L, 1, 0);
 							}
-							cur_scene->locations = cur_scene->locations->south;
-							AUX_Display(cur_scene->locations->on_enter);
-							if (cur_scene->locations->callback_enter > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_enter);
+							cur_scene->locations->data = tmp_location->south;
+							tmp_location = cur_scene->locations->data;
+							AUX_Display(tmp_location->on_enter);
+							if (tmp_location->callback_enter > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_enter);
 								lua_pushstring(L, "south");
 								lua_call(L, 1, 0);
 							}
 						}
 						else {
 							AUX_Display("There isn't anything south of here.");
-							if (cur_scene->locations->callback_invalid > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_invalid);
+							if (tmp_location->callback_invalid > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_invalid);
 								lua_pushstring(L, "south"); //let them know the direction the player tried to go in
 								lua_call(L, 1, 0);
 							}
@@ -170,24 +173,25 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 						goto QUIT;
 					}
 					else if (!strcmp(tokens[1], "west")) {
-						if (cur_scene->locations->west) {
-							if (cur_scene->locations->callback_exit > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_exit);
+						if (tmp_location->west) {
+							if (tmp_location->callback_exit > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_exit);
 								lua_pushstring(L, "west"); //push direction the player is leaving in
 								lua_call(L, 1, 0);
 							}
-							cur_scene->locations = cur_scene->locations->west;
-							AUX_Display(cur_scene->locations->on_enter);
-							if (cur_scene->locations->callback_enter > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_enter);
+							cur_scene->locations->data = tmp_location->west;
+							tmp_location = cur_scene->locations->data;
+							AUX_Display(tmp_location->on_enter);
+							if (tmp_location->callback_enter > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_enter);
 								lua_pushstring(L, "west");
 								lua_call(L, 1, 0);
 							}
 						}
 						else {
 							AUX_Display("There isn't anything west of here.");
-							if (cur_scene->locations->callback_invalid > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_invalid);
+							if (tmp_location->callback_invalid > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_invalid);
 								lua_pushstring(L, "west"); //let them know the direction the player tried to go in
 								lua_call(L, 1, 0);
 							}
@@ -196,24 +200,25 @@ void AUX_Handle_GameLoop(void) { //recieves text input, calls lua 'main' functio
 						goto QUIT;
 					}
 					else if (!strcmp(tokens[1], "east")) {
-						if (cur_scene->locations->east) {
-							if (cur_scene->locations->callback_exit > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_exit);
+						if (tmp_location->east) {
+							if (tmp_location->callback_exit > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_exit);
 								lua_pushstring(L, "east"); //push direction the player is leaving in
 								lua_call(L, 1, 0);
 							}
-							cur_scene->locations = cur_scene->locations->east;
-							AUX_Display(cur_scene->locations->on_enter);
-							if (cur_scene->locations->callback_enter > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_enter);
+							cur_scene->locations->data = tmp_location->east;
+							tmp_location = cur_scene->locations->data;
+							AUX_Display(tmp_location->on_enter);
+							if (tmp_location->callback_enter > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_enter);
 								lua_pushstring(L, "east");
 								lua_call(L, 1, 0);
 							}
 						}
 						else {
 							AUX_Display("There isn't anything east of here.");
-							if (cur_scene->locations->callback_invalid > 0) {
-								lua_rawgeti(L, LUA_REGISTRYINDEX, cur_scene->locations->callback_invalid);
+							if (tmp_location->callback_invalid > 0) {
+								lua_rawgeti(L, LUA_REGISTRYINDEX, tmp_location->callback_invalid);
 								lua_pushstring(L, "east"); //let them know the direction the player tried to go in
 								lua_call(L, 1, 0);
 							}

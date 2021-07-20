@@ -8,7 +8,8 @@ static const struct luaL_reg engine_lib[] = {
 	{"wait", LUAPROC_Wait},
 	{"display", LUAPROC_Display},
 	{"load_texture", LUAPROC_Load_Texture},
-	{"destroy_texture", LUAPROC_Destroy_Texture},
+	{"load_audio", LUAPROC_Load_Audio},
+	{"load_music", LUAPROC_Load_Music},
 	{"set_background", LUAPROC_Set_Background},
 	{"set_currentscene", LUAPROC_Set_CurrentScene},
     {NULL, NULL}
@@ -20,17 +21,45 @@ static const struct luaL_reg scene_methods[] = {
 	{"set", METAPROC_Setter_Scene},
 	{NULL, NULL}
 };
+static const struct luaL_reg audio_methods[] = {
+	{"play",METAPROC_Play_Audio},
+	{"stop",METAPROC_Stop_Audio},
+	{NULL, NULL}
+};
+static const struct luaL_reg music_methods[] = {
+	{"play",METAPROC_Play_Music},
+	{"stop",METAPROC_Stop_Music},
+	{NULL, NULL}
+};
 //we dont need any parameters since all variables we are using are global variables, this function is mainly used for ease-of-reading
 inline void AUX_Load_Libraries(void) { 
 	luaL_openlibs(L); //load standered library
 	//now we load our SHARED/GLOBAL lua functions 
 	luaL_openlib(L, "engine", engine_lib, 0);
-	//now lets create some metatables
+	//scene metatable
 	luaL_newmetatable(L, "scene_metatable");
 	luaL_newmetatable(L, "scene_metamethods");
 	luaL_openlib(L, NULL, scene_methods, 0); //should set methods of scene_metamethods which is the __index for scene_metatable
 	lua_setfield(L, -2, "__index");
 	lua_pushcfunction(L, METAPROC_Gc_Scene);
+	lua_setfield(L, -2, "__gc");
+	//audio metatable
+	luaL_newmetatable(L, "audio_metatable");
+	luaL_newmetatable(L, "audio_metamethods");
+	luaL_openlib(L, NULL, audio_methods, 0); 
+	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, METAPROC_Gc_Audio);
+	lua_setfield(L, -2, "__gc");
+	//music metatable
+	luaL_newmetatable(L, "music_metatable");
+	luaL_newmetatable(L, "music_metamethods");
+	luaL_openlib(L, NULL, music_methods, 0);
+	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, METAPROC_Gc_Music);
+	lua_setfield(L, -2, "__gc");
+	//texture metatable
+	luaL_newmetatable(L, "texture_metatable");
+	lua_pushcfunction(L, METAPROC_Gc_Texture);
 	lua_setfield(L, -2, "__gc");
 }
 //game loop was long so it has its own file
