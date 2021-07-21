@@ -34,7 +34,8 @@ function start()
    {"bigtest","workpls", callback_workpls, callback_2, callback_3},{"cool spot","asf", nil, nil, nil},{"ssss","vbsbsb", nil, nil, nil},
    {"bigtesta","workplsa", nil, nil, nil},{"cool spota","asf", nil, nil, nil},{"ssssa","vbsbsb", nil, nil, nil},
    {"bigtestb","workplsb", nil, nil, nil},{"cool spotb","asf", nil, nil, nil},{"ssssb","vbsbsb", nil, nil, nil})
-   nullzone:set("locations",testlocations) --I want the user to be able to edit locations, maybe add getter and setters?
+   nullzone:set("locations",testlocations) --consider allowing locations to be set similar to how interactions are set
+   --and maybe consider being able to read them as well
   -- print(nullzone:get("locationmap"))
    --engine.destroy_locationmap(testlocations)
    engine.set_currentscene(test)

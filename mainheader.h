@@ -20,7 +20,7 @@
 #define MAX_BUFFER_SIZE 512 //512 is an all-around good amount for most char arrays
 #define MAX_INPUT_SIZE 64
 #define MAX_TOKENS 4
-#define MAX_ETYPES 7
+#define MAX_ETYPES 8
 #define MAX_MIXER_CHANNELS 8
 //important globals
 extern SDL_Window* window;
@@ -40,6 +40,8 @@ extern lua_State* L;
 //important custom types
 typedef enum e_types e_types;
 typedef struct s_data s_data;
+typedef struct s_interaction s_interaction;
+typedef int lua_callback;
 
 enum e_types {
 	T_UNKNOWN = -1, //this type will probably never be used but just in case
@@ -48,11 +50,17 @@ enum e_types {
 	T_AUDIO = 2, //this is an audio stream that is loaded in ram
 	T_MUSIC = 3,
 	T_SCENE = 4,
-	T_LOCATION = 5
+	T_LOCATION = 5,
+	T_THING = 6
 };
 struct s_data {
 	void* data;
 	e_types type;
+};
+struct s_interaction {
+	lua_callback call; //the rest of the tokens will be sent to this function
+	char* keyword; //keyword that triggers this interaction
+	s_interaction* next;
 };
 typedef struct s_renderered_text s_renderered_text;
 
@@ -70,19 +78,23 @@ typedef struct s_thing s_thing;
 
 struct s_scene {
 	char* name, *on_enter, *on_exit, *examine;
-	int callback_enter, callback_exit, callback_examine;
+	lua_callback callback_enter, callback_exit, callback_examine;
 	s_data* locations; //this s_data thing is annoying but we're doing it for safety
 	UT_hash_handle hh;
 };
+//TO DO: make locations similar to how interactions work, they can be set from tables but cannot be read, but def think about the 'write-only' idea for the location since reading it might be important
+//def make sure everything is consistant too
 struct s_location {
 	char* examine, *on_enter;  //locations don't have names, they have descriptions and things within them
-	int callback_enter, callback_exit, callback_invalid; //invalid callback is when player tries to go out of bounds, this can be used to switch scenes or something
+	lua_callback callback_enter, callback_exit, callback_invalid; //invalid callback is when player tries to go out of bounds, this can be used to switch scenes or something
 	s_location* north, *south, *west, *east;
 	s_location* orginal_map;
-	s_thing* things;
+	int w, h; //referring to the dimensions of the locationmap
+	s_data* things; //linked list of s_things, but we have to make it s_data for type checking
 };
 struct s_thing {
 	char* name, *examine;
+	s_interaction* interactions; //linked list of interactions, the s_data thing really is triggering me but once again we are doing it for saftey
 };
 extern s_scene* scenes, *cur_scene;
 //important global functions
@@ -108,6 +120,8 @@ extern int LUAPROC_Destroy_Location(lua_State* L);
 
 extern int LUAPROC_Wait(lua_State* L);
 extern int LUAPROC_Set_CurrentScene(lua_State* L);
+
+extern int LUAPROC_Create_Thing(lua_State* L);
 //metamethods
 extern int METAPROC_Load_Scene(lua_State* L);
 extern int METAPROC_Unload_Scene(lua_State* L);
@@ -124,3 +138,7 @@ extern int METAPROC_Play_Music(lua_State* L);
 extern int METAPROC_Stop_Music(lua_State* L);
 
 extern int METAPROC_Gc_Texture(lua_State* L);
+
+extern int METAPROC_Gc_Thing(lua_State* L);
+extern int METAPROC_Getter_Thing(lua_State* L);
+extern int METAPROC_Setter_Thing(lua_State* L);

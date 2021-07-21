@@ -31,6 +31,11 @@ static const struct luaL_reg music_methods[] = {
 	{"stop",METAPROC_Stop_Music},
 	{NULL, NULL}
 };
+static const struct luaL_reg thing_methods[] = {
+	{"get",METAPROC_Getter_Thing},
+	{"set",METAPROC_Setter_Thing},
+	{NULL, NULL}
+};
 //we dont need any parameters since all variables we are using are global variables, this function is mainly used for ease-of-reading
 inline void AUX_Load_Libraries(void) { 
 	luaL_openlibs(L); //load standered library
@@ -60,6 +65,13 @@ inline void AUX_Load_Libraries(void) {
 	//texture metatable
 	luaL_newmetatable(L, "texture_metatable");
 	lua_pushcfunction(L, METAPROC_Gc_Texture);
+	lua_setfield(L, -2, "__gc");
+	//thing metatable
+	luaL_newmetatable(L, "thing_metatable");
+	luaL_newmetatable(L, "thing_metamethods");
+	luaL_openlib(L, NULL, thing_methods, 0);
+	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, METAPROC_Gc_Thing);
 	lua_setfield(L, -2, "__gc");
 }
 //game loop was long so it has its own file

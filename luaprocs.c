@@ -86,10 +86,10 @@ int LUAPROC_Create_Scene(lua_State* L) {// s_scene*(userdata) create_scene(char*
 }
 //location maps will actually be a subtype with a different __index metamethod that can take in numbers
 int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_locationmap(int w, int h, int offsetx, int offsety, ...)
-	int width = luaL_checknumber(L, 1);
-	int height = luaL_checknumber(L, 2);
-	int offsetx = luaL_checknumber(L, 3);
-	int offsety = luaL_checknumber(L, 4);
+	int width = luaL_checkinteger(L, 1);
+	int height = luaL_checkinteger(L, 2);
+	int offsetx = luaL_checkninteger(L, 3);
+	int offsety = luaL_checkinteger(L, 4);
 	s_location* locations = calloc(width * height, sizeof(s_location));
 	for (int i = 0; i < height; ++i) {
 		for (int j = 0; j < width; ++j) {
@@ -104,6 +104,7 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 			char* on_enter = lua_tostring(L, -1);
 			char* examine = lua_tostring(L, -2);
 			locations[j + (i * width)].examine = examine, locations[j + (i * width)].on_enter = on_enter, locations[j + (i * width)].orginal_map = locations;
+			locations[j + (i * width)].w = width, locations[j + (i * width)].h = height;
 		}
 	}
 	for (int i = 0; i < height; ++i) {
@@ -136,9 +137,20 @@ int LUAPROC_Create_LocationMap(lua_State* L) { // location(userdata)* create_loc
 }
 int LUAPROC_Destroy_Location(lua_State* L) { // void destroy_location(s_location(userdata)* tmp_location)
 	s_data* udata = lua_touserdata(L, 1);
+	s_location* location_l = udata->data;
+	s_location* location = location_l->orginal_map;
 	if (udata && udata->type == T_LOCATION) {
-		if (udata->data)
-			free(udata->data);
+		if (location) {
+			for (int i = 0; i < location->w * location->h; ++i) {
+				if (location[i].callback_enter)
+					luaL_unref(L, LUA_REGISTRYINDEX, location[i].callback_enter);
+				if (location[i].callback_exit)
+					luaL_unref(L, LUA_REGISTRYINDEX, location[i].callback_exit);
+				if (location[i].callback_invalid)
+					luaL_unref(L, LUA_REGISTRYINDEX, location[i].callback_invalid);
+			}
+			free(location);
+		}
 		else
 			flogf("LUA EXCEPTION: Attempted to destroy nil 'location' or 'locationmap'\n");
 	}
@@ -160,7 +172,7 @@ int LUAPROC_Set_Background(lua_State* L) { // void set_background(SDL_Texture(us
 	return 0;
 }
 int LUAPROC_Wait(lua_State* L) { //void wait(int ms)
-	int ms = luaL_checknumber(L, 1);
+	int ms = luaL_checkinteger(L, 1);
 	SDL_Delay(ms);
 	return 0;
 }
@@ -173,4 +185,26 @@ int LUAPROC_Set_CurrentScene(lua_State* L) { //void set_currentscene(s_scene(use
 	else
 		flogf("LUA EXPCETION: Inavlid type, NIL, passed to 'set_currentscene'\n");
 	return 0;
+}
+//thing stuff here
+int LUAPROC_Create_Thing(lua_State* L) { //s_thing* create_thing(char* name, char* examine, int num_interactions, ...)
+	char* name = luaL_checkstring(L, 1);
+	char* examine = luaL_checkstring(L, 2);
+	int num_interactions = luaL_checkinteger(L, 3);
+	s_thing* thing = calloc(1,sizeof(*thing)); //just to make things easier
+	thing->name = name, thing->examine = examine;
+	for (int i = 0; i < num_interactions; ++i) {
+		luaL_checktype(L, 4 + i, LUA_TTABLE); //interactions take the form as {keyword,function}
+		lua_rawgeti(L, 4 + i, 1); //get the keyword
+		lua_rawgeti(L, 4 + i, 2); //get the function
+		s_interaction* tmp_inter = calloc(1, sizeof(*tmp_inter));
+		tmp_inter->call = luaL_ref(L, LUA_REGISTRYINDEX); //get function and store refrence to it
+		tmp_inter->keyword = luaL_checkstring(L, -1); //get keyword, luaL_ref pops function so keyword is at the top now
+		LL_APPEND(thing->interactions, tmp_inter); //add to list
+	}
+	s_data* udata = lua_newuserdata(L, sizeof(*udata));
+	udata->data = thing, udata->type = T_THING;
+	lua_getfield(L, LUA_REGISTRYINDEX, "thing_metatable");
+	lua_setmetatable(L, -2);
+	return 1;
 }

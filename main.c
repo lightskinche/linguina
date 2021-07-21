@@ -2,7 +2,7 @@
 //define some externs
 char main_symbol[MAX_BUFFER_SIZE], textmain_symbol[MAX_BUFFER_SIZE], start_symbol[MAX_BUFFER_SIZE];
 char entry_file[MAX_BUFFER_SIZE], scripts_path[MAX_BUFFER_SIZE], program_name[MAX_BUFFER_SIZE];
-char input_buf[MAX_INPUT_SIZE], * e_typenames[MAX_ETYPES] = { "T_NIL","T_TEXTURE","T_AUDIO","T_MUSIC","T_SCENE","T_LOCATION" }; //for easy e_type to str conversion
+char input_buf[MAX_INPUT_SIZE], * e_typenames[MAX_ETYPES] = { "T_NIL","T_TEXTURE","T_AUDIO","T_MUSIC","T_SCENE","T_LOCATION", "T_THING"}; //for easy e_type to str conversion
 
 int resolution_x = 0, resolution_y = 0; lua_State* L = NULL;
 int main_ref = 0, textmain_ref = 0, start_ref = 0;
